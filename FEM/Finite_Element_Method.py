@@ -4,26 +4,26 @@ import scipy.sparse as sps
 
 def kab(h, a, b):
 
-    return ((-1)**((a+1)*(b+1))) / h
+    return ((-1)**(a+b)) / h
 
 
-def fa(h, a, fun, g, e, n):
+def fa(h, a, fun, g, e, n, x):
 
-    if e == 0:
-        if a == 0:
+    if e == 1:
+        if a == 1:
             s = 1
         else:
             s = 0
-    elif 0 < e < n - 1:
+    elif 1 < e < n:
         s = 0
     else:
-        s = -kab(h, a, 1) * g
+        s = -kab(h, a, 2) * g
 
-    return (((2.0 - a) * fun[0] + (1.0 + a) * fun[1]) / h) + s
+    return (((3.0 - a) * fun(x) + a * fun(x+h)) * (h / 6.0)) + s
 
 
 def location_matrix(a, e, n):
-    if a == 0:
+    if a == 1:
         return e
     else:
         if e + 1 > n:
@@ -49,33 +49,46 @@ def location_matrix(a, e, n):
 #         return xe
 
 
-def solve_d(n, basis):
+def solve_d(n, basis, fun):
 
     h = 1.0/float(n)
     g = 0
-    fun = [1.0, 1.0]
-    k = np.empty((n, n), dtype=float)
+    k = np.zeros((n, n), dtype=float)
     f = np.empty((n, 1), dtype=float)
+    x = 0
 
-    for e in xrange(n):
+    for e in xrange(1, n+1):
         ke = np.empty((2, 2), dtype=float)
         fe = np.empty((2, 1), dtype=float)
-        for a in xrange(2):
-            for b in xrange(2):
-                ke[a][b] = kab(h, a, b)
-            fe[a] = fa(h, a, fun, g, e, n)
-        for a in xrange(2):
-            m = location_matrix(a, e, n)
-            if m != 0:
-                for b in xrange(2):
-                    n = location_matrix(b, e, n)
-                    if n != 0:
-                        k[m][n] = ke[a][b]
-            f[m] = fe[a]
+        for a in xrange(1, 3):
+            for b in xrange(1, 3):
+                ke[a-1][b-1] = kab(h, a, b)
+            fe[a-1] = fa(h, a, fun, g, e, n, x)
+        for a in xrange(1, 3):
+            i = location_matrix(a, e, n)
+            if i != 0:
+                for b in xrange(1, 3):
+                    j = location_matrix(b, e, n)
+                    if j != 0:
+                        k[i-1][j-1] += ke[a-1][b-1]
+            f[i-1] = fe[a-1]
+    x += h
 
     k = np.asmatrix(k)
     d = k.I * f
 
     print d
 
-solve_d(4, 4)
+
+def func_c(x):
+    return 1.0
+
+
+def func_x(x):
+    return x
+
+
+def func_x2(x):
+    return x**2
+
+solve_d(4, 4, func_x)
