@@ -7,11 +7,11 @@ def kab(h, a, b):
     return ((-1)**(a+b)) / h
 
 
-def fa(h, a, fun, g, e, n, x):
+def fa(h, a, fun, g, hc, e, n, x):
 
     if e == 1:
         if a == 1:
-            s = 1
+            s = hc
         else:
             s = 0
     elif 1 < e < n:
@@ -19,7 +19,7 @@ def fa(h, a, fun, g, e, n, x):
     else:
         s = -kab(h, a, 2) * g
 
-    return (((3.0 - a) * fun(x) + a * fun(x+h)) * (h / 6.0)) + s
+    return ((((3 - a) * fun(x)) + (a * fun(x + h))) * (h / 6.0)) + s
 
 
 def location_matrix(a, e, n):
@@ -53,8 +53,9 @@ def solve_d(n, basis, fun):
 
     h = 1.0/float(n)
     g = 0
+    hc = 0
     k = np.zeros((n, n), dtype=float)
-    f = np.empty((n, 1), dtype=float)
+    f = np.zeros((n, 1), dtype=float)
     x = 0
 
     for e in xrange(1, n+1):
@@ -63,7 +64,7 @@ def solve_d(n, basis, fun):
         for a in xrange(1, 3):
             for b in xrange(1, 3):
                 ke[a-1][b-1] = kab(h, a, b)
-            fe[a-1] = fa(h, a, fun, g, e, n, x)
+            fe[a-1] = fa(h, a, fun, g, hc, e, n, x)
         for a in xrange(1, 3):
             i = location_matrix(a, e, n)
             if i != 0:
@@ -71,24 +72,10 @@ def solve_d(n, basis, fun):
                     j = location_matrix(b, e, n)
                     if j != 0:
                         k[i-1][j-1] += ke[a-1][b-1]
-            f[i-1] = fe[a-1]
-    x += h
+                f[i-1] += fe[a-1]
+        x += h
 
     k = np.asmatrix(k)
     d = k.I * f
 
     print d
-
-
-def func_c(x):
-    return 1.0
-
-
-def func_x(x):
-    return x
-
-
-def func_x2(x):
-    return x**2
-
-solve_d(4, 4, func_x)
