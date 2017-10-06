@@ -1,5 +1,9 @@
-import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 
-def print_value(d):
-    print d
+def plot_graphs(x, y):
+
+    for i in xrange(len(x)):
+        plt.plot(x[i], y[i])
+
+    plt.show()

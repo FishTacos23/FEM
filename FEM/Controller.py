@@ -24,6 +24,6 @@ def linear(a, c):
 
     return n
 
-Model = FEM.FEM(4, None, func_x)
-u = Model.solve()
-Pl.print_value(u)
+Model = FEM.FEM(4, linear, func_x)
+u, x = Model.solve()
+Pl.plot_graphs(x, u)
