@@ -2,80 +2,83 @@ import numpy as np
 import scipy.sparse as sps
 
 
-def kab(h, a, b):
+class FEM(object):
 
-    return ((-1)**(a+b)) / h
+    def __init__(self, n, basis, fun, he=None, h=0, g=0):
 
+        self.n = n
+        self.fun = fun
+        self.basis = basis
 
-def fa(h, a, fun, g, hc, e, n, x):
-
-    if e == 1:
-        if a == 1:
-            s = hc
+        if he is None:
+            self.he = [1.0/float(n)]*n
         else:
+            self.he = he
+
+        self.h = h
+        self.g = g
+
+    def _kab(self, a, b, e):
+
+        return ((-1)**(a+b)) / self.he[e-1]
+
+    def _fa(self, a, e, x):
+
+        if e == 1:
+            if a == 1:
+                s = self.h
+            else:
+                s = 0
+        elif 1 < e < self.n:
             s = 0
-    elif 1 < e < n:
-        s = 0
-    else:
-        s = -kab(h, a, 2) * g
-
-    return ((((3 - a) * fun(x)) + (a * fun(x + h))) * (h / 6.0)) + s
-
-
-def location_matrix(a, e, n):
-    if a == 1:
-        return e
-    else:
-        if e + 1 > n:
-            return 0
         else:
-            return e + 1
+            s = -self._kab(a, 2, e) * self.g
 
+        return ((((3 - a) * self.fun(x)) + (a * self.fun(x + self.he[e-2]))) * (self.he[e-1] / 6.0)) + s
 
-# def map_basis(direction, basis):
-#     """
-#
-#     map_basis
-#
-#     :param direction: {x_to_c, c_to_x}
-#     :type direction: str
-#     :return: value of basis in new coordinate
-#     """
-#
-#     if direction == 'x_to_c':
-#         xe = 0
-#         for a in xrange(2):
-#             xe += basis[a](c)*x[a]
-#         return xe
+    def _location_matrix(self, a, e):
+        if a == 1:
+            return e
+        else:
+            if e + 1 > self.n:
+                return 0
+            else:
+                return e + 1
 
+    def solve(self):
 
-def solve_d(n, basis, fun):
+        u = np.empty((self.n, 1))
+        d = self._solve_d()
 
-    h = 1.0/float(n)
-    g = 0
-    hc = 0
-    k = np.zeros((n, n), dtype=float)
-    f = np.zeros((n, 1), dtype=float)
-    x = 0
+        return d
 
-    for e in xrange(1, n+1):
-        ke = np.empty((2, 2), dtype=float)
-        fe = np.empty((2, 1), dtype=float)
-        for a in xrange(1, 3):
-            for b in xrange(1, 3):
-                ke[a-1][b-1] = kab(h, a, b)
-            fe[a-1] = fa(h, a, fun, g, hc, e, n, x)
-        for a in xrange(1, 3):
-            i = location_matrix(a, e, n)
-            if i != 0:
+    def _solve_d(self):
+
+        k = np.zeros((self.n, self.n), dtype=float)
+        f = np.zeros((self.n, 1), dtype=float)
+        x = 0
+
+        for e in xrange(1, self.n+1):
+
+            ke = np.empty((2, 2), dtype=float)
+            fe = np.empty((2, 1), dtype=float)
+
+            for a in xrange(1, 3):
                 for b in xrange(1, 3):
-                    j = location_matrix(b, e, n)
-                    if j != 0:
-                        k[i-1][j-1] += ke[a-1][b-1]
-                f[i-1] += fe[a-1]
-        x += h
+                    ke[a-1][b-1] = self._kab(a, b, e)
+                fe[a-1] = self._fa(a, e, x)
 
-    k = np.asmatrix(k)
-    d = k.I * f
+            for a in xrange(1, 3):
+                i = self._location_matrix(a, e)
+                if i != 0:
+                    for b in xrange(1, 3):
+                        j = self._location_matrix(b, e)
+                        if j != 0:
+                            k[i-1][j-1] += ke[a-1][b-1]
+                    f[i-1] += fe[a-1]
 
-    print d
+            x += self.he[e-1]
+
+        k = np.asmatrix(k)
+        return k.I * f
+
