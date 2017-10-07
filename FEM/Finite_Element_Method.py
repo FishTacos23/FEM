@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.sparse as sps
-import sklearn.preprocessing as sk
 
 
 class FEM(object):
@@ -47,12 +46,10 @@ class FEM(object):
 
     def get_n(self, x):
 
-        scalar = sk.MinMaxScaler((-1, 1))
-        scalar.fit(x)
-        c = scalar.transform(x)
+        c = np.arange(-1., 1, 2.0 / float(len(x)))
 
-        n1 = self.basis(2, c)
-        n2 = self.basis(1, c)
+        n2 = self.basis(2, c)
+        n1 = self.basis(1, c)
 
         return [n1, n2]
 
