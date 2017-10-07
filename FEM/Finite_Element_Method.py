@@ -29,7 +29,7 @@ class FEM(object):
 
         for e in xrange(1, self.n + 1):
 
-            x.append(np.arange(x_pos, x_pos + self.he[e-1], 0.001))
+            x.append(np.arange(x_pos, x_pos + self.he[e-1], 0.00001))
 
             n_val = self.get_n(x[-1])
 
@@ -64,22 +64,14 @@ class FEM(object):
 
         for e in xrange(1, self.n+1):
 
-            ke = np.empty((2, 2), dtype=float)
-            fe = np.empty((2, 1), dtype=float)
-
-            for a in xrange(1, 3):
-                for b in xrange(1, 3):
-                    ke[a-1][b-1] = self._kab(a, b, e)
-                fe[a-1] = self._fa(a, e, x)
-
             for a in xrange(1, 3):
                 i = self._location_matrix(a, e)
                 if i != 0:
                     for b in xrange(1, 3):
                         j = self._location_matrix(b, e)
                         if j != 0:
-                            k[i-1][j-1] += ke[a-1][b-1]
-                    f[i-1] += fe[a-1]
+                            k[i-1][j-1] += self._kab(a, b, e)
+                    f[i-1] += self._fa(a, e, x)
 
             x += self.he[e-1]
 
