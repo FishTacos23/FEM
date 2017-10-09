@@ -55,11 +55,22 @@ for func in funcs:
     uhs.append(uh_f)
     xhs.append(xh_f)
 
-x = [np.arange(0., 1., .001)]
+x = [np.arange(0., 1., .000001)]
 ucs = [[eq_c(x[0])], [eq_x(x[0])], [eq_x2(x[0])]]
 
 # Pl.plot_graphs([x, xh], [u, uh], 'u='+str(n)+' f=x2')
 
+e = []
 for i in xrange(len(funcs)):
+    e_f = []
     for j in xrange(len(ns)):
-        print Er.calc_error(ucs[i], uhs[i][j], x, xhs[i][j])
+        e_f.append(Er.calc_error(ucs[i], uhs[i][j], x, xhs[i][j]))
+    e.append(e_f)
+
+hs = []
+for n in ns:
+    hs.append(1./n)
+
+labels = ['f(x)=c', 'f(x)=x', 'f(x)=x2']
+
+Pl.plt_error(hs, e, labels, 'Error')

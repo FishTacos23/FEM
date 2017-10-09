@@ -29,7 +29,7 @@ class FEM(object):
 
         for e in xrange(1, self.n + 1):
 
-            x.append(np.arange(x_pos, x_pos + self.he[e-1], 0.00001))
+            x.append(np.arange(x_pos, x_pos + self.he[e-1], 0.000001))
 
             n_val = self.get_n(x[-1])
 
@@ -46,7 +46,7 @@ class FEM(object):
 
     def get_n(self, x):
 
-        c = np.arange(-1., 1, 2.0 / float(len(x)))
+        c = np.arange(-1., 1., 2.0 / float(len(x)))
 
         n2 = self.basis(2, c)
         n1 = self.basis(1, c)
