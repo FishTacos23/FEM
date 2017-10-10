@@ -15,7 +15,7 @@ def plot_graphs(x, y, title):
     plt.show()
 
 
-def plt_error(h, e, labels, title):
+def plt_error(h, e, title):
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)

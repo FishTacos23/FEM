@@ -39,51 +39,53 @@ def eq_c(ex, g=0, h=0):
     return (-1. / 2.0) * (ex**2.0 - 1.0) - h*ex + g + h
 
 
-ns = [10, 100, 1000, 10000]
-funcs = [func_c, func_x, func_x2]
-eqs = [eq_c, eq_x, eq_x2]
-uhs = []
-xhs = []
-dhs = []
+def plot_errors(ns, funcs, eqs):
 
-for func in funcs:
-    uh_f = []
-    xh_f = []
-    dh_f = []
-    for n_ in ns:
-        Model = FEM.FEM(n_, linear, func)
-        uh, xh, dh = Model.solve()
-        uh_f.append(uh)
-        xh_f.append(xh)
-        dh_f.append(dh)
-    uhs.append(uh_f)
-    xhs.append(xh_f)
-    dhs.append(dh_f)
+    dhs = []
 
-x = [np.arange(0., 1., .000001)]
-ucs = [[eq_c(x[0])], [eq_x(x[0])], [eq_x2(x[0])]]
+    for func in funcs:
+        dh_f = []
+        for n in ns:
+            model = FEM.FEM(n, linear, func)
+            uh, xh, dh = model.solve()
+            dh_f.append(dh)
+        dhs.append(dh_f)
 
-# Pl.plot_graphs([x, xh], [u, uh], 'u='+str(n)+' f=x2')
+    e = []
+    for i in xrange(len(funcs)):
+        e_f = []
+        for j in xrange(len(ns)):
+            he = [1.0 / float(ns[j])] * ns[j]
+            e_f.append(Er.calc_error(he, dhs[i][j], linear, eqs[i]))
+        e.append(e_f)
 
-e = []
-for i in xrange(len(funcs)):
-    e_f = []
-    for j in xrange(len(ns)):
-        if j ==3:
-            p = True
-        else:
-            p=False
-        e_f.append(Er.calc_error(uhs[i][j], xhs[i][j], dhs[i][j], linear, eqs[i], p))
-    e.append(e_f)
+    hs = []
+    for n in ns:
+        hs.append(1. / n)
 
-hs = []
-for n_1 in ns:
-    hs.append(1./n_1)
+    for e_func in e:
+        for e_n in e_func:
+            print e_n
 
-labels = ['c', 'x', 'x2']
+    Pl.plt_error(hs, e, 'Error')
 
-for e_func in e:
-    for e_n in e_func:
-        print e_n
 
-Pl.plt_error(hs, e, labels, 'Error')
+def plot_solutions(ns, funcs, eqs):
+
+    x = [np.arange(0., 1., .000001)]
+
+    for i, func in enumerate(funcs):
+        for n in ns:
+
+            model = FEM.FEM(n, linear, func)
+            uh, xh, dh = model.solve()
+
+            Pl.plot_graphs([x, xh], [[eqs[i](x[0])], uh], 'n=' + str(n) + ' f=x2')
+
+
+
+n_list = [10, 100, 1000, 10000]
+func_list = [func_c, func_x, func_x2]
+eq_list = [eq_c, eq_x, eq_x2]
+
+plot_errors(n_list, func_list, eq_list)
