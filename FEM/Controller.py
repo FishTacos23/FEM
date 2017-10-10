@@ -41,19 +41,24 @@ def eq_c(ex, g=0, h=0):
 
 ns = [10, 100, 1000, 10000]
 funcs = [func_c, func_x, func_x2]
+eqs = [eq_c, eq_x, eq_x2]
 uhs = []
 xhs = []
+dhs = []
 
 for func in funcs:
     uh_f = []
     xh_f = []
-    for n in ns:
-        Model = FEM.FEM(n, linear, func)
-        uh, xh = Model.solve()
+    dh_f = []
+    for n_ in ns:
+        Model = FEM.FEM(n_, linear, func)
+        uh, xh, dh = Model.solve()
         uh_f.append(uh)
         xh_f.append(xh)
+        dh_f.append(dh)
     uhs.append(uh_f)
     xhs.append(xh_f)
+    dhs.append(dh_f)
 
 x = [np.arange(0., 1., .000001)]
 ucs = [[eq_c(x[0])], [eq_x(x[0])], [eq_x2(x[0])]]
@@ -64,13 +69,14 @@ e = []
 for i in xrange(len(funcs)):
     e_f = []
     for j in xrange(len(ns)):
-        e_f.append(Er.calc_error(ucs[i], uhs[i][j], x, xhs[i][j]))
+        e_f.append(Er.calc_error(uhs[i][j], xhs[i][j], dhs[i][j], linear, eqs[i]))
     e.append(e_f)
 
 hs = []
-for n in ns:
-    hs.append(1./n)
+for n_1 in ns:
+    hs.append(1./n_1)
 
-labels = ['f(x)=c', 'f(x)=x', 'f(x)=x2']
+labels = ['c', 'x', 'x2']
 
 Pl.plt_error(hs, e, labels, 'Error')
+print e

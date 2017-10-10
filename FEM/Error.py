@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 
-def calc_error(u, uh, x, xh):
+def calc_error(uh, xh, dh, basis, equation, g=0):
 
     s = 0
     gc = [-math.sqrt(3./5.), 0., math.sqrt(3./5.)]
@@ -10,14 +10,21 @@ def calc_error(u, uh, x, xh):
 
     for i in xrange(len(uh)):
         for j in xrange(3):
+
             x_loc = (gc[j] + 1.)*(xh[i].max() - xh[i].min())/2. + xh[i].min()
 
-            x_idx = (np.abs(x - x_loc)).argmin()
-            u_val = u[0][x_idx]
+            u_val = equation(x_loc)
 
-            xh_idx = (np.abs(xh[i] - x_loc)).argmin()
-            uh_val = uh[i][xh_idx]
+            n2 = basis(2, gc[j])
+            n1 = basis(1, gc[j])
 
-            s += (math.pow((u_val - uh_val), 2.)*((xh[i].max() - xh[i].min())/2.)*w[j])
+            if i < len(uh)-1:
+                uh_val = n1*dh.item(i) + n2*dh.item(i+1)
+            else:
+                uh_val = n1*dh.item(i) + n2*g
+
+            dxdc = (xh[i].max() - xh[i].min())/2.
+
+            s += (math.pow((u_val - uh_val), 2.)*dxdc*w[j])
 
     return math.sqrt(s)

@@ -21,10 +21,10 @@ def plt_error(h, e, labels, title):
     ax = fig.add_subplot(1, 1, 1)
 
     for i in xrange(len(e)):
-        line, = ax.plot(h, e[i], color=colors[i], lw=2, labels=labels[i])
+        line, = ax.plot(h, e[i], color=colors[i], lw=2)
 
     ax.set_yscale('log')
     ax.set_xscale('log')
-    fig.suptitle('title')
+    fig.suptitle(title)
 
     plt.show()

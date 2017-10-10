@@ -42,7 +42,7 @@ class FEM(object):
 
             x_pos += self.he[e-1]
 
-        return u, x
+        return u, x, d
 
     def get_n(self, x):
 
