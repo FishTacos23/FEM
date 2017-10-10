@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 
-def calc_error(uh, xh, dh, basis, equation, g=0):
+def calc_error(uh, xh, dh, basis, equation, p, g=0):
 
     s = 0
     gc = [-math.sqrt(3./5.), 0., math.sqrt(3./5.)]
@@ -26,5 +26,11 @@ def calc_error(uh, xh, dh, basis, equation, g=0):
             dxdc = (xh[i].max() - xh[i].min())/2.
 
             s += (math.pow((u_val - uh_val), 2.)*dxdc*w[j])
+
+            if p:
+                print str(uh_val) + ', ' + str(u_val)
+
+    if p:
+        str(math.sqrt(s))
 
     return math.sqrt(s)

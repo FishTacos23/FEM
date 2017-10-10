@@ -69,7 +69,11 @@ e = []
 for i in xrange(len(funcs)):
     e_f = []
     for j in xrange(len(ns)):
-        e_f.append(Er.calc_error(uhs[i][j], xhs[i][j], dhs[i][j], linear, eqs[i]))
+        if j ==3:
+            p = True
+        else:
+            p=False
+        e_f.append(Er.calc_error(uhs[i][j], xhs[i][j], dhs[i][j], linear, eqs[i], p))
     e.append(e_f)
 
 hs = []
@@ -78,5 +82,8 @@ for n_1 in ns:
 
 labels = ['c', 'x', 'x2']
 
+for e_func in e:
+    for e_n in e_func:
+        print e_n
+
 Pl.plt_error(hs, e, labels, 'Error')
-print e
