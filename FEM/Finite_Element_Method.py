@@ -4,9 +4,10 @@ import scipy.sparse as sps
 
 class FEM(object):
 
-    def __init__(self, n, basis, fun, he=None, h=0, g=0):
+    def __init__(self, n, basis, fun, p=1, he=None, h=0, g=0):
 
         self.n = n
+        self.p = p
         self.fun = fun
         self.basis = basis
 
@@ -17,6 +18,8 @@ class FEM(object):
 
         self.h = h
         self.g = g
+
+        self.knot_vector = np.empty(())
 
     def solve(self):
 
@@ -48,8 +51,8 @@ class FEM(object):
 
         c = np.arange(-1., 1., 2.0 / float(len(x)))
 
-        n2 = self.basis(2, c)
-        n1 = self.basis(1, c)
+        n2 = self.basis(2, c, self.p)
+        n1 = self.basis(1, c, self.p)
 
         return [n1, n2]
 

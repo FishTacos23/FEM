@@ -2,21 +2,14 @@ import Finite_Element_Method as FEM
 import Plotter as Pl
 import numpy as np
 import Error as Er
-
-
-def func_c(ex):
-    return 1.0
-
-
-def func_x(ex):
-    return ex
+import math
 
 
 def func_x2(ex):
     return ex**2
 
 
-def linear(a, c):
+def linear(a, c, p):
 
     if a == 1:
         n = 0.5 * (1 - c)
@@ -27,16 +20,31 @@ def linear(a, c):
     return n
 
 
-def eq_x(ex, g=0, h=0):
-    return (-1. / 6.0) * (ex**3.0 - 1.0) - h*ex + g + h
+def b_spline(p):
+
+    if p == 1:
+        pass
+    elif p == 2:
+        pass
+    elif p == 3:
+        pass
+    else:
+        pass
+
+    return 0
+
+
+def bernstein(a, gc, p):
+    f1 = (1/(2**float(p)))
+    f2 = (math.factorial(p)/(math.factorial(a-1)*math.factorial(p-a+1)))
+    f3 = ((1.-gc)**(p-float(a)+1.))
+    f4 = ((1.+gc)**(float(a)-1.))
+
+    return f1*float(f2)*f3*f4
 
 
 def eq_x2(ex, g=0, h=0):
     return (-1. / 12.0) * (ex**4.0 - 1.0) - h*ex + g + h
-
-
-def eq_c(ex, g=0, h=0):
-    return (-1. / 2.0) * (ex**2.0 - 1.0) - h*ex + g + h
 
 
 def plot_errors(ns, funcs, eqs):
@@ -70,22 +78,22 @@ def plot_errors(ns, funcs, eqs):
     Pl.plt_error(hs, e, 'Error')
 
 
-def plot_solutions(ns, funcs, eqs):
+def plot_solutions(ns, funcs, eqs, ps):
 
     x = [np.arange(0., 1., .000001)]
 
     for i, func in enumerate(funcs):
         for n in ns:
+            for p in ps:
+                model = FEM.FEM(n, bernstein, func, p=p)
+                uh, xh, dh = model.solve()
 
-            model = FEM.FEM(n, linear, func)
-            uh, xh, dh = model.solve()
-
-            Pl.plot_graphs([x, xh], [[eqs[i](x[0])], uh], 'n=' + str(n) + ' f=x2')
+                Pl.plot_graphs([x, xh], [[eqs[i](x[0])], uh], 'n=' + str(n) + ' f=x2')
 
 
+n_list = [10]
+func_list = [func_x2]
+eq_list = [eq_x2]
+p_list = [1]
 
-n_list = [10, 100, 1000, 10000]
-func_list = [func_c, func_x, func_x2]
-eq_list = [eq_c, eq_x, eq_x2]
-
-plot_errors(n_list, func_list, eq_list)
+plot_solutions(n_list, func_list, eq_list, p_list)
