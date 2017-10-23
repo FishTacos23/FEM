@@ -19,7 +19,8 @@ class FEM(object):
         self.h = h
         self.g = g
 
-        self.knot_vector = np.empty(())
+        self.num_basis = n - p - 1
+        self.knot_vector = np.empty(n)
 
     def solve(self):
 
@@ -55,6 +56,42 @@ class FEM(object):
         n1 = self.basis(1, c, self.p)
 
         return [n1, n2]
+
+    def construct_knot(self):
+        pass
+
+    def xga(self):
+        x_s = np.empty(self.n+1)
+        x_s[0] = 0.
+
+        # for
+
+    def get_c_e(self, e):
+
+        if self.p == 2:
+            if e == 1:
+                return np.asarray([[1., 0., 0.], [0., 1., .5], [0., 0., .5]])
+            elif e == self.n:
+                return np.asarray([[.5, 0., 0.], [.5, 1., 0.], [0., 0., 1.]])
+            else:
+                return np.asarray([[.5, 0., 0.], [.5, 1., .5], [0., 0., .5]])
+
+        elif self.p == 3:
+            if e == 1:
+                return np.asarray([[1., 0., 0., 0.], [0., 1., .5, .25],
+                                   [0., 0., .5, 7./12.], [0., 0., 0., 1./6.]])
+            elif e == 2:
+                return np.asarray([[.25, 0., 0., 0.], [7./12., 2./3., 1./3., 1./6.],
+                                   [1./6., 1./3., 2./3., 2./3.], [0., 0., 0., 1./6.]])
+            elif e == self.n - 1:
+                return np.asarray([[1./.6, 0., 0., 0], [2./3., 2./3., 1./3., 1./6.],
+                                   [1./6., 1./3., 2./3., 7./12.], [0., 0., 0., .25]])
+            elif e == self.n:
+                return np.asarray([[1./6., 0., 0., 0.], [7./12., .5, 0., 0.],
+                                   [.25, .5, 1., 0.], [0., 0., 0., 1.]])
+            else:
+                return np.asarray([[1./6., 0., 0., 0.], [2./3., 2./3., 1./3., 1./6.],
+                                   [1./6., 1./3., 2./3., 2./3.], [0., 0., 0., 1./6.]])
 
     def x_to_c(self, ):
         pass

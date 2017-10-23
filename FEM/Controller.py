@@ -94,6 +94,6 @@ def plot_solutions(ns, funcs, eqs, ps):
 n_list = [10]
 func_list = [func_x2]
 eq_list = [eq_x2]
-p_list = [1]
+p_list = [2]
 
 plot_solutions(n_list, func_list, eq_list, p_list)
