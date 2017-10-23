@@ -20,7 +20,9 @@ class FEM(object):
         self.g = g
 
         self.num_basis = n - p - 1
-        self.knot_vector = np.empty(n)
+
+        self.knot_vector = np.append(np.zeros(p+1), [np.arange(1, n-2*(p+1)), np.zeros(p+1)+(n-2*(p+1))])
+        print self.knot_vector
 
     def solve(self):
 
@@ -56,9 +58,6 @@ class FEM(object):
         n1 = self.basis(1, c, self.p)
 
         return [n1, n2]
-
-    def construct_knot(self):
-        pass
 
     def xga(self):
         x_s = np.empty(self.n+1)
