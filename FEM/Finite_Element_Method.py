@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sps
+import math
 
 
 class FEM(object):
@@ -23,8 +24,10 @@ class FEM(object):
         self.n_int = p + 1
 
         self.knot_vector = np.array(np.zeros(p+1))
-        self.knot_vector = np.insert(self.knot_vector, len(self.knot_vector), np.arange(1, n+1-2*(p+1)))
-        self.knot_vector = np.insert(self.knot_vector, len(self.knot_vector), np.zeros(p+1)+(n+1-2*(p+1)))
+        self.knot_vector = np.insert(self.knot_vector, len(self.knot_vector), np.arange(1, n))
+        self.knot_vector = np.insert(self.knot_vector, len(self.knot_vector), np.zeros(p+1)+n)
+
+        print self.knot_vector
 
     def solve(self):
 
@@ -124,13 +127,40 @@ class FEM(object):
 
         k = np.zeros((self.n, self.n), dtype=float)
         f = np.zeros((self.n, 1), dtype=float)
-        x = 0
+        xa = self.xga()
+
+        q_s, w_s = self._get_quadratures()
 
         for e in xrange(1, self.n + 1):
-            for j in xrange(1, self.p):
-                # local B
-                # local N
-                # global
+            for j in xrange(1, self.n_int + 1):
+
+                b_s = []
+                db_s = []
+                ddb_s = []
+
+                for a in xrange(1, self.n_int + 1):
+                    b_s.append(self._local_b(q_s[j-1], a)[0])
+                    db_s.append(self._local_b(q_s[j-1], a)[1])
+                    ddb_s.append(self._local_b(q_s[j-1], a)[2])
+
+                ce = np.asarray(self.get_c_e(e))
+                b_s = np.asarray(b_s)
+                db_s = np.asarray(db_s)
+                ddb_s = np.asarray(ddb_s)
+
+                ne, dne, ddne = self._local_n(q_s[j-1], b_s, db_s, ddb_s, ce)
+
+                xae = []
+
+                for i in xrange(1, self.p+3):
+                    xae.append(self.knot_vector[i-1])
+
+                x = 0.
+                dx = 0.
+                ddx = 0.
+
+                for a in xrange(1, self.n_int + 1):
+                    x += xne
 
                 for a in xrange(1, self.p + 1):
                     i = self._lm(a, e)
@@ -157,6 +187,51 @@ class FEM(object):
         #
         # k = np.asmatrix(k)
         # return k.I * f
+
+    def _get_quadratures(self):
+
+        if self.n_int == 1:
+            q_points = [0.]
+            weights = [2]
+        elif self.n_int == 2:
+            q_points = [-1./math.sqrt(3.), 1./math.sqrt(3.)]
+            weights = [1, 1]
+        elif self.n_int == 3:
+            q_points = [-math.sqrt(3./5.), 0., math.sqrt(3./5.)]
+            weights = [5./9., 8./9., 5./9.]
+        elif self.n_int == 4:
+            q_points = [-0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526]
+            weights = [0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538]
+        else:
+            q_points = None
+            weights = None
+
+        return q_points, weights
+
+    def _local_b(self, gc, a):
+
+        b = self.basis[0](a, gc, self.p)
+        db = self.basis[1](a, gc, self.p)
+        ddb = self.basis[2](a, gc, self.p)
+
+        return b, db, ddb
+
+    def _local_n(self, gc, b, db, ddb, ce):
+
+        n = ce*b
+        dn = ce*db
+        ddn = ce*ddb
+
+        return n, dn, ddn
+
+    def _global(self, n, dnc, ddnc, xe):
+
+        dnx = None
+        ddnx = None
+        j = None
+        xc = None
+
+        return dnx, ddnx, j, xc
 
     def _kab(self, a, b, e):
 

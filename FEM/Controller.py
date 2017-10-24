@@ -43,6 +43,27 @@ def bernstein(a, gc, p):
     return f1*float(f2)*f3*f4
 
 
+def d_bernstein(a, gc, p):
+    f1 = (1 / (2 ** float(p)))
+    f2 = (math.factorial(p) / (math.factorial(a - 1) * math.factorial(p - a + 1)))
+    f3 = ((1. - gc) ** (p - float(a)))
+    f4 = ((1. + gc) ** (float(a) - 2.))
+    f5 = (2. * float(a) - float(p) * gc - float(p) - 2.)
+
+    return f1*float(f2)*f3*f4*f5
+
+
+def dd_bernstein(a, gc, p):
+    f1 = (1 / (2 ** float(p)))
+    f2 = (math.factorial(p) / (math.factorial(a - 1) * math.factorial(p - a + 1)))
+    f3 = ((1. - gc) ** (p - float(a) - 1.))
+    f4 = ((1. + gc) ** (float(a) - 3.))
+    f5 = (4.*(float(a)**2.)-4.*float(a)*(float(p)*(gc+1.)-gc+2.) +
+          (float(p)**2.)*((gc + 1.)**2.)+float(p)*(-gc-1.)*(gc-3.)-4.*(gc-1.))
+
+    return f1 * float(f2) * f3 * f4 * f5
+
+
 def eq_x2(ex, g=0, h=0):
     return (-1. / 12.0) * (ex**4.0 - 1.0) - h*ex + g + h
 
@@ -85,7 +106,7 @@ def plot_solutions(ns, funcs, eqs, ps):
     for i, func in enumerate(funcs):
         for n in ns:
             for p in ps:
-                model = FEM.FEM(n, bernstein, func, p=p)
+                model = FEM.FEM(n, [bernstein, d_bernstein, dd_bernstein], func, p=p)
                 uh, xh, dh = model.solve()
 
                 Pl.plot_graphs([x, xh], [[eqs[i](x[0])], uh], 'n=' + str(n) + ' f=x2')
