@@ -27,53 +27,46 @@ class FEM(object):
         self.n_int = p + 1
 
         self.knot_vector = self._get_knot_vector()
+        self.xga = self._xga()
 
     def solve(self):
 
-        d, n = self._solve_d()
+        d = self._solve_d()
+        x = np.linspace(0., 1., 1000)
+        xc = np.linspace(-1., 1., 1000)
 
+        # u = np.zeros((len(x)), dtype=float)
         u = []
-        xc = np.arange(0., 1., .00001)
 
-        for a in xrange(1, len(d)):
-            u_h
+        for e in xrange(self.n):
 
-        return u, d, x
+            ue = np.zeros((len(xc)))
+            ce = np.matrix(self._get_c_e(e))
 
-    def get_n(self, x_len):
+            for i in xrange(len(xc)):
 
-        c = np.arange(-1., 1., 2.0 / float(x_len))
+                b_s = []
+                for a in xrange(1, self.n_int + 1):
+                    b_s.append(self.basis[0](a, xc[i], self.p))
 
-        ne = []
+                b = np.matrix(b_s)
+                n = ce * b.T
 
-        for i in xrange(1, self.n + 1):
-            c_mat = np.asmatrix(self._get_c_e(i))
-            b_vec = np.empty((self.p+1, 1))
-            for j in xrange(1, self.p+1):
-                b_vec[j] = self.basis(j, c, self.p)
-            ne.append(c_mat*b_vec)
+                for a in xrange(1, self.p + 1):
+                    loc = self._lm(a, e)
 
-        return ne
+                    ue[i] += n[loc-1][0]*d[loc-1]
+
+            u.append(ue)
+
+        return u, x
 
     def _solve_d(self):
 
-        xa = self._xga()
-
-        k = np.zeros((len(xa) - 2, len(xa) - 2), dtype=float)
-        f = np.zeros((len(xa) - 2, 1), dtype=float)
+        k = np.zeros((len(self.xga) - 2, len(self.xga) - 2), dtype=float)
+        f = np.zeros((len(self.xga) - 2, 1), dtype=float)
 
         q_s, w_s = self._get_quadratures()
-
-        xc_values = np.linspace(-1., 1., 10000)
-        b_local_curves = []
-        for a in xrange(1, self.n_int + 1):
-            b_local_curves.append(self._local_b_curves(xc_values, a))
-
-        for e in xrange(1, self.n+1):
-            ce = self._get_c_e(e)
-
-
-        n_curves = []
 
         for e in xrange(1, self.n + 1):
 
@@ -94,9 +87,9 @@ class FEM(object):
                 db_s = np.asarray(db_s)
                 ddb_s = np.asarray(ddb_s)
 
-                ne, dne, ddne, n = self._local_n(b_s, db_s, ddb_s, ce)
+                ne, dne, ddne = self._local_n(b_s, db_s, ddb_s, ce)
 
-                dnx, ddnx, jac, x = self._global(ne, dne, ddne, xa[e-1:e+self.p+2])
+                dnx, ddnx, jac, x = self._global(ne, dne, ddne, self.xga[e-1:e+self.p+2])
 
                 dnx = np.asarray(dnx)
                 ddnx = np.asarray(ddnx)
@@ -112,10 +105,10 @@ class FEM(object):
                         if m == 0:
                             break
                         k[i-1][m-1] = ddnx[a-1][0]*self.mat_e*self.geo_i*ddnx[b-1][0]*jac[0][0]*w_s[j-1]
-                    f[i - 1] += ne*self._fa(x[0])*jac[0][0]*w_s[j-1]
+                    f[i - 1] += ne[a-1]*self._fa(x[0])*jac[0][0]*w_s[j-1]
 
         k = np.asmatrix(k)
-        return np.asarray(k.I * f), n_curves
+        return np.asarray(k.I * f)
 
     def _get_knot_vector(self):
         knot_vector = np.array(np.zeros(self.p + 1))
@@ -205,7 +198,7 @@ class FEM(object):
         dn = ce*db.T
         ddn = ce*ddb.T
 
-        return np.asarray(n), np.asarray(dn), np.asarray(ddn), n
+        return np.asarray(n), np.asarray(dn), np.asarray(ddn)
 
     def _global(self, n, dn, ddn, xae):
 
