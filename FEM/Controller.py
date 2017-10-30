@@ -20,20 +20,6 @@ def linear(a, c, p):
     return n
 
 
-def b_spline(p):
-
-    if p == 1:
-        pass
-    elif p == 2:
-        pass
-    elif p == 3:
-        pass
-    else:
-        pass
-
-    return 0
-
-
 def bernstein(a, gc, p):
     f1 = (1/(2**float(p)))
     f2 = (math.factorial(p)/(math.factorial(a-1)*math.factorial(p-a+1)))
@@ -115,6 +101,6 @@ def plot_solutions(ns, funcs, eqs, ps):
 n_list = [10]
 func_list = [func_x2]
 eq_list = [eq_x2]
-p_list = [3]
+p_list = [2]
 
 plot_solutions(n_list, func_list, eq_list, p_list)

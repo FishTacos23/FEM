@@ -1,6 +1,6 @@
 import numpy as np
-import scipy.sparse as sps
 import math
+import matplotlib.pyplot as plt
 
 
 class FEM(object):
@@ -20,6 +20,9 @@ class FEM(object):
         self.h = h
         self.g = g
 
+        self.geo_i = 1
+        self.mat_e = 1
+
         self.num_basis = n - p - 1
         self.n_int = p + 1
 
@@ -27,43 +30,15 @@ class FEM(object):
 
     def solve(self):
 
-        d = self._solve_d()
+        d, n = self._solve_d()
 
-        x = []
         u = []
+        xc = np.arange(0., 1., .00001)
 
-        # x_pos = 0.
+        for a in xrange(1, len(d)):
+            u_h
 
-        x.append(np.arange(0., 1., 0.000001))
-        n_vals = self.get_n(len(x))
-        ef = self._xga()
-
-        # for e in xrange(1, self.n + 1):
-        #     for j in xrange(1, self.p):
-        #         # local B
-        #         # local N
-        #         # global
-        #
-        #         for a in xrange(1, self.p+1):
-        #             if self._location_matrix(a, e) == 0:
-        #                 break
-        #             for b in xrange(1, self.p+1):
-        #                 if self._location_matrix(b, e) == 0:
-
-            #
-            # u.append(ef[e-1]*n_vals[e-1])
-            #
-            # if e < self.n:
-            #     u_e = n_val[0]*d.item(e-1) + n_val[1]*d.item(e)
-            # else:
-            #     u_e = n_val[0]*d.item(e-1) + n_val[1]*self.g
-            #
-            # u.append(u_e)
-            #
-            # x_pos += self.he[e-1]
-
-        print u
-        return u, x, d
+        return u, d, x
 
     def get_n(self, x_len):
 
@@ -72,7 +47,7 @@ class FEM(object):
         ne = []
 
         for i in xrange(1, self.n + 1):
-            c_mat = np.asmatrix(self.get_c_e(i))
+            c_mat = np.asmatrix(self._get_c_e(i))
             b_vec = np.empty((self.p+1, 1))
             for j in xrange(1, self.p+1):
                 b_vec[j] = self.basis(j, c, self.p)
@@ -82,13 +57,26 @@ class FEM(object):
 
     def _solve_d(self):
 
-        k = np.zeros((self.n, self.n), dtype=float)
-        f = np.zeros((self.n, 1), dtype=float)
         xa = self._xga()
+
+        k = np.zeros((len(xa) - 2, len(xa) - 2), dtype=float)
+        f = np.zeros((len(xa) - 2, 1), dtype=float)
 
         q_s, w_s = self._get_quadratures()
 
+        xc_values = np.linspace(-1., 1., 10000)
+        b_local_curves = []
+        for a in xrange(1, self.n_int + 1):
+            b_local_curves.append(self._local_b_curves(xc_values, a))
+
+        for e in xrange(1, self.n+1):
+            ce = self._get_c_e(e)
+
+
+        n_curves = []
+
         for e in xrange(1, self.n + 1):
+
             for j in xrange(1, self.n_int + 1):
 
                 b_s = []
@@ -96,18 +84,24 @@ class FEM(object):
                 ddb_s = []
 
                 for a in xrange(1, self.n_int + 1):
-                    b_s.append(self._local_b(q_s[j-1], a)[0])
-                    db_s.append(self._local_b(q_s[j-1], a)[1])
-                    ddb_s.append(self._local_b(q_s[j-1], a)[2])
+                    basis = self._local_b(q_s[j-1], a)
+                    b_s.append(basis[0])
+                    db_s.append(basis[1])
+                    ddb_s.append(basis[2])
 
-                ce = self.get_c_e(e)
+                ce = self._get_c_e(e)
                 b_s = np.asarray(b_s)
                 db_s = np.asarray(db_s)
                 ddb_s = np.asarray(ddb_s)
 
-                ne, dne, ddne = self._local_n(q_s[j-1], b_s, db_s, ddb_s, ce)
+                ne, dne, ddne, n = self._local_n(b_s, db_s, ddb_s, ce)
 
                 dnx, ddnx, jac, x = self._global(ne, dne, ddne, xa[e-1:e+self.p+2])
+
+                dnx = np.asarray(dnx)
+                ddnx = np.asarray(ddnx)
+                jac = np.asarray(jac)
+                x = np.asarray(x)
 
                 for a in xrange(1, self.p + 1):
                     i = self._lm(a, e)
@@ -116,11 +110,12 @@ class FEM(object):
                     for b in xrange(1, self.p + 1):
                         m = self._lm(b, e)
                         if m == 0:
-                            k[i - 1][m - 1] += self._kab(a, b, e)
-                    f[i - 1] += self._fa(a, e, x[a - 1])
+                            break
+                        k[i-1][m-1] = ddnx[a-1][0]*self.mat_e*self.geo_i*ddnx[b-1][0]*jac[0][0]*w_s[j-1]
+                    f[i - 1] += ne*self._fa(x[0])*jac[0][0]*w_s[j-1]
 
         k = np.asmatrix(k)
-        return k.I * f
+        return np.asarray(k.I * f), n_curves
 
     def _get_knot_vector(self):
         knot_vector = np.array(np.zeros(self.p + 1))
@@ -158,7 +153,7 @@ class FEM(object):
             x_a[a-1] = float(x_a_sum)/float(self.p)
         return x_a
 
-    def get_c_e(self, e):
+    def _get_c_e(self, e):
 
         if self.p == 2:
             if e == 1:
@@ -193,49 +188,57 @@ class FEM(object):
 
         return b, db, ddb
 
-    def _local_n(self, gc, b, db, ddb, ce):
+    def _local_b_curves(self, xs, a):
+        b_curves = np.empty((len(xs)))
+        for i, x in enumerate(xs):
+            b_curves[i] = self.basis[0](a, x, self.p)
+        return b_curves
 
-        n = ce*b
-        dn = ce*db
-        ddn = ce*ddb
+    def _local_n(self, b, db, ddb, ce):
 
-        return n, dn, ddn
+        ce = np.matrix(ce)
+        b = np.matrix(b)
+        db = np.matrix(db)
+        ddb = np.matrix(ddb)
+
+        n = ce*b.T
+        dn = ce*db.T
+        ddn = ce*ddb.T
+
+        return np.asarray(n), np.asarray(dn), np.asarray(ddn), n
 
     def _global(self, n, dn, ddn, xae):
 
         xe_c = 0.
         dxe_c = 0.
         ddxe_c = 0.
+
         for i in xrange(1, self.p+2):
             xe_c += xae[i-1]*n[i-1]
             dxe_c += xae[i-1]*dn[i-1]
             ddxe_c += xae[i-1]*ddn[i-1]
 
-        dnx = dn/dxe_c
-        ddnx = (ddn - dnx*ddxe_c)/(dxe_c**2)
+        dxe_c_s = dxe_c**2
+        dxe_c_s = np.matrix(dxe_c_s)
+
+        dn = np.matrix(dn)
+        dxe_c = np.matrix(dxe_c)
+
+        ddn = np.matrix(ddn)
+        ddxe_c = np.matrix(ddxe_c)
+
+        dnx = dn*dxe_c.I
+        ddnx = (ddn - dnx*ddxe_c)*dxe_c_s.I
         j = dxe_c
 
         return dnx, ddnx, j, xe_c
 
-    def _kab(self, a, b, e):
+    def _fa(self,  x):
 
-        return ((-1)**(a+b)) / self.he[e-1]
-
-    def _fa(self, a, e, x):
-
-        if e == 1:
-            if a == 1:
-                s = self.h
-            else:
-                s = 0
-        elif 1 < e < self.n:
-            s = 0
-        else:
-            s = -self._kab(a, 2, e) * self.g
-
-        return ((((3 - a) * self.fun(x)) + (a * self.fun(x + self.he[e-2]))) * (self.he[e-1] / 6.0)) + s
+        return self.fun(x)
 
     def _lm(self, a, e):
+
         if e + 1 > self.n:
             return 0
         else:
