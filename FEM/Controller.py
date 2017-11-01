@@ -85,15 +85,15 @@ def plot_errors(ns, funcs, eqs):
     Pl.plt_error(hs, e, 'Error')
 
 
-def plot_solutions(ns, funcs, eqs, ps):
+def plot_solutions(ns, funcs, eqs, ps, l):
 
     x = [np.arange(0., 1., .000001)]
 
     for i, func in enumerate(funcs):
         for n in ns:
             for p in ps:
-                model = FEM.FEM(n, [bernstein, d_bernstein, dd_bernstein], func, p=p)
-                uh, xh, dh = model.solve()
+                model = FEM.FEM(n, [bernstein, d_bernstein, dd_bernstein], func, l=l, p=p)
+                uh, xh = model.solve()
 
                 Pl.plot_graphs([x, xh], [[eqs[i](x[0])], uh], 'n=' + str(n) + ' f=x2')
 
@@ -102,5 +102,6 @@ n_list = [10]
 func_list = [func_x2]
 eq_list = [eq_x2]
 p_list = [2]
+l = 1.
 
-plot_solutions(n_list, func_list, eq_list, p_list)
+plot_solutions(n_list, func_list, eq_list, p_list, l)

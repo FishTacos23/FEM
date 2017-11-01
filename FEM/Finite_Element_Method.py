@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 class FEM(object):
 
-    def __init__(self, n, basis, fun, p=1, he=None, h=0, g=0):
+    def __init__(self, n, basis, fun, l=None, p=1, he=None, h=0, g=0):
 
         self.n = n
         self.p = p
@@ -17,6 +17,11 @@ class FEM(object):
         else:
             self.he = he
 
+        if l is None:
+            self.l = float(n)
+        else:
+            self.l = l
+
         self.h = h
         self.g = g
 
@@ -26,22 +31,32 @@ class FEM(object):
         self.num_basis = n - p - 1
         self.n_int = p + 1
 
+        self.num_bc = 2
+
         self.knot_vector = self._get_knot_vector()
         self.xga = self._xga()
 
     def solve(self):
 
-        d = self._solve_d()
-        x = np.linspace(0., 1., 1000)
+        d_n = self._solve_d()
         xc = np.linspace(-1., 1., 1000)
 
-        # u = np.zeros((len(x)), dtype=float)
         u = []
+        x = []
 
-        for e in xrange(self.n):
+        d = np.zeros((len(self.xga), 1))
+        for a in xrange(1, len(self.xga)+1):
+            if self._id(a) != 0:
+                d[a-1] = d_n[a-1]
+
+        for e in xrange(1, self.n+1):
 
             ue = np.zeros((len(xc)))
+            xe = np.zeros((len(xc)))
             ce = np.matrix(self._get_c_e(e))
+
+            # find positions of x
+            xs = self.xga[e - 1:e + self.p + 1]
 
             for i in xrange(len(xc)):
 
@@ -51,20 +66,23 @@ class FEM(object):
 
                 b = np.matrix(b_s)
                 n = ce * b.T
+                n = np.array(n)
+
+                for j in xrange(1, self.p + 2):
+                    xe[i] += xs[j - 1] * n[j - 1]
 
                 for a in xrange(1, self.p + 1):
-                    loc = self._lm(a, e)
-
-                    ue[i] += n[loc-1][0]*d[loc-1]
+                    ue[i] += n[a-1][0]*d[self._lm(a, e)]
 
             u.append(ue)
+            x.append(xe)
 
         return u, x
 
     def _solve_d(self):
 
-        k = np.zeros((len(self.xga) - 2, len(self.xga) - 2), dtype=float)
-        f = np.zeros((len(self.xga) - 2, 1), dtype=float)
+        k = np.zeros((len(self.xga) - self.num_bc, len(self.xga) - self.num_bc), dtype=float)
+        f = np.zeros((len(self.xga) - self.num_bc, 1), dtype=float)
 
         q_s, w_s = self._get_quadratures()
 
@@ -104,7 +122,7 @@ class FEM(object):
                         m = self._lm(b, e)
                         if m == 0:
                             break
-                        k[i-1][m-1] = ddnx[a-1][0]*self.mat_e*self.geo_i*ddnx[b-1][0]*jac[0][0]*w_s[j-1]
+                        k[i-1][m-1] += ddnx[a-1][0]*self.mat_e*self.geo_i*ddnx[b-1][0]*jac[0][0]*w_s[j-1]
                     f[i - 1] += ne[a-1]*self._fa(x[0])*jac[0][0]*w_s[j-1]
 
         k = np.asmatrix(k)
@@ -112,8 +130,8 @@ class FEM(object):
 
     def _get_knot_vector(self):
         knot_vector = np.array(np.zeros(self.p + 1))
-        knot_vector = np.insert(knot_vector, len(knot_vector), np.arange(1, self.n))
-        knot_vector = np.insert(knot_vector, len(knot_vector), np.zeros(self.p + 1) + self.n)
+        knot_vector = np.insert(knot_vector, len(knot_vector), np.arange(self.l/self.n, self.l, self.l/self.n))
+        knot_vector = np.insert(knot_vector, len(knot_vector), np.zeros(self.p + 1) + self.l)
 
         return knot_vector
 
@@ -232,7 +250,14 @@ class FEM(object):
 
     def _lm(self, a, e):
 
-        if e + 1 > self.n:
+        global_a = self._ien(e, a)
+        return self._id(global_a)
+
+    def _ien(self, e, a):
+        return e + a - 1
+
+    def _id(self, global_a):
+        if global_a > len(self.xga) - self.num_bc:
             return 0
         else:
-            return e + a - 1
+            return global_a
