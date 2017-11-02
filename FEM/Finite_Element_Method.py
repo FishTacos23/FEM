@@ -5,36 +5,30 @@ import matplotlib.pyplot as plt
 
 class FEM(object):
 
-    def __init__(self, n, basis, fun, l=None, p=1, he=None, h=0, g=0):
+    def __init__(self, n, basis, fun, l=None, p=1, prop=(1, 1), bc=((-1, 0), (-2, 0))):
 
-        self.n = n
-        self.p = p
-        self.fun = fun
-        self.basis = basis
+        self.n = n  # number of elements
+        self.p = p  # degree
+        self.num_nodes = p + n  # number of nodes
+        self.num_basis = n - p - 1  # number of basis functions
+        self.n_int = p + 1  # number of quadratures / basis per element
+        self.num_bc = len(bc)  # number of boundary conditions
 
-        if he is None:
-            self.he = [1.0/float(n)]*n
-        else:
-            self.he = he
+        self.fun = fun  # forcing function
+        self.basis = basis  # basis function
+        self.bc = bc  # boundary conditions
+
+        self.g_i = prop[0]  # polar moment of inertia (I)
+        self.m_e = prop[1]  # Modulus of Elasticity (E)
 
         if l is None:
             self.l = float(n)
         else:
-            self.l = l
+            self.l = l  # length of system
 
-        self.h = h
-        self.g = g
-
-        self.geo_i = 1
-        self.mat_e = 1
-
-        self.num_basis = n - p - 1
-        self.n_int = p + 1
-
-        self.num_bc = 2
-
-        self.knot_vector = self._get_knot_vector()
-        self.xga = self._xga()
+        self.knot_vector = self._get_knot_vector()  # knot vector
+        self.xga = self._xga()  # global locations of the nodes
+        self.id_array = self._construct_id()  # id array for location matrix
 
     def solve(self):
 
@@ -55,7 +49,6 @@ class FEM(object):
             xe = np.zeros((len(xc)))
             ce = np.matrix(self._get_c_e(e))
 
-            # find positions of x
             xs = self.xga[e - 1:e + self.p + 1]
 
             for i in xrange(len(xc)):
@@ -77,7 +70,7 @@ class FEM(object):
             u.append(ue)
             x.append(xe)
 
-        return u, x
+        return u, x, d, self.xga
 
     def _solve_d(self):
 
@@ -122,7 +115,7 @@ class FEM(object):
                         m = self._lm(b, e)
                         if m == 0:
                             break
-                        k[i-1][m-1] += ddnx[a-1][0]*self.mat_e*self.geo_i*ddnx[b-1][0]*jac[0][0]*w_s[j-1]
+                        k[i-1][m-1] += ddnx[a-1][0]*self.m_e * self.g_i * ddnx[b - 1][0] * jac[0][0] * w_s[j - 1]
                     f[i - 1] += ne[a-1]*self._fa(x[0])*jac[0][0]*w_s[j-1]
 
         k = np.asmatrix(k)
@@ -257,7 +250,17 @@ class FEM(object):
         return e + a - 1
 
     def _id(self, global_a):
-        if global_a > len(self.xga) - self.num_bc:
-            return 0
-        else:
-            return global_a
+        return self.id_array[global_a]
+
+    def _construct_id(self):
+        id_array = np.empty(self.num_nodes)
+        num_eq = 0
+        for i in xrange(self.num_nodes):
+            skip = False
+            for bc in self.bc:
+                if bc[0] == i:
+                    skip = True
+            if not skip:
+                num_eq += 1
+                id_array[i] = num_eq
+        return id_array

@@ -93,9 +93,9 @@ def plot_solutions(ns, funcs, eqs, ps, l):
         for n in ns:
             for p in ps:
                 model = FEM.FEM(n, [bernstein, d_bernstein, dd_bernstein], func, l=l, p=p)
-                uh, xh = model.solve()
+                uh, xh, d, xga = model.solve()
 
-                Pl.plot_graphs([x, xh], [[eqs[i](x[0])], uh], 'n=' + str(n) + ' f=x2')
+                Pl.plot_graphs([x, xh], [[eqs[i](x[0])], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
 
 
 n_list = [10]

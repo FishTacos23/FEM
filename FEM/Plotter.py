@@ -3,11 +3,14 @@ import matplotlib.pyplot as plt
 colors = ['r', 'g', 'b', 'orange']
 
 
-def plot_graphs(x, y, title):
+def plot_graphs(x, y, title, p=None):
 
     for i in xrange(len(x)):
         for j in xrange(len(x[i])):
             plt.plot(x[i][j], y[i][j], color=colors[i])
+
+    if p is not None:
+        plt.plot(p[1], p[0], 'bo')
 
     plt.xlabel('x')
     plt.ylabel('u')
