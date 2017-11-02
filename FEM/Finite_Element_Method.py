@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 class FEM(object):
 
-    def __init__(self, n, basis, fun, l=None, p=1, prop=(1, 1), bc=((-1, 0), (-2, 0))):
+    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1.), bc=((-1, 0), (-2, 0))):
 
         self.n = n  # number of elements
         self.p = p  # degree
@@ -29,43 +29,33 @@ class FEM(object):
         self.knot_vector = self._get_knot_vector()  # knot vector
         self.xga = self._xga()  # global locations of the nodes
         self.id_array = self._construct_id()  # id array for location matrix
+        self.qs, self.ws = self._get_quadratures()  # quadrature points and weighting values
 
     def solve(self):
 
-        d_n = self._solve_d()
-        xc = np.linspace(-1., 1., 1000)
+        d_n = self._solve_d()  # solve for displacements of non-zero nodes
+        xc = np.linspace(-0.99999, 0.99999, 100)  # list of xc values for which to solve
 
-        u = []
-        x = []
+        u = []  # list of u for each element
+        x = []  # list of matching x values
 
-        d = np.zeros((len(self.xga), 1))
+        d = np.zeros((len(self.xga), 1))  # place zero value nodes in d
         for a in xrange(1, len(self.xga)+1):
             if self._id(a) != 0:
                 d[a-1] = d_n[a-1]
 
-        for e in xrange(1, self.n+1):
+        for e in xrange(1, self.n+1):  # loop over elements
 
             ue = np.zeros((len(xc)))
-            xe = np.zeros((len(xc)))
-            ce = np.matrix(self._get_c_e(e))
+            xe = np.empty((len(xc)))
 
-            xs = self.xga[e - 1:e + self.p + 1]
+            for i in xrange(len(xc)):  # loop over each xc value
 
-            for i in xrange(len(xc)):
+                dnx, ddnx, jac, x_pos, ne = self._basis_x(e, xc[i])  # get basis and x
+                xe[i] = x_pos
 
-                b_s = []
-                for a in xrange(1, self.n_int + 1):
-                    b_s.append(self.basis[0](a, xc[i], self.p))
-
-                b = np.matrix(b_s)
-                n = ce * b.T
-                n = np.array(n)
-
-                for j in xrange(1, self.p + 2):
-                    xe[i] += xs[j - 1] * n[j - 1]
-
-                for a in xrange(1, self.p + 1):
-                    ue[i] += n[a-1][0]*d[self._lm(a, e)]
+                for a in xrange(1, self.p + 2):
+                    ue[i] += ne[a-1]*d[self._lm(a, e)]
 
             u.append(ue)
             x.append(xe)
@@ -74,52 +64,54 @@ class FEM(object):
 
     def _solve_d(self):
 
-        k = np.zeros((len(self.xga) - self.num_bc, len(self.xga) - self.num_bc), dtype=float)
-        f = np.zeros((len(self.xga) - self.num_bc, 1), dtype=float)
+        k = np.zeros((self.num_nodes - self.num_bc, self.num_nodes - self.num_bc), dtype=float)  # global K
+        f = np.zeros((self.num_nodes - self.num_bc, 1), dtype=float)  # global F
 
-        q_s, w_s = self._get_quadratures()
+        for e in xrange(1, self.n + 1):  # loop over elements
 
-        for e in xrange(1, self.n + 1):
+            for j in xrange(1, self.n_int + 1):  # loop over quadrature points
 
-            for j in xrange(1, self.n_int + 1):
+                dnx, ddnx, jac, x, ne = self._basis_x(e, self.qs[j - 1])  # get values of global basis, x, and jac
 
-                b_s = []
-                db_s = []
-                ddb_s = []
-
-                for a in xrange(1, self.n_int + 1):
-                    basis = self._local_b(q_s[j-1], a)
-                    b_s.append(basis[0])
-                    db_s.append(basis[1])
-                    ddb_s.append(basis[2])
-
-                ce = self._get_c_e(e)
-                b_s = np.asarray(b_s)
-                db_s = np.asarray(db_s)
-                ddb_s = np.asarray(ddb_s)
-
-                ne, dne, ddne = self._local_n(b_s, db_s, ddb_s, ce)
-
-                dnx, ddnx, jac, x = self._global(ne, dne, ddne, self.xga[e-1:e+self.p+2])
-
-                dnx = np.asarray(dnx)
-                ddnx = np.asarray(ddnx)
-                jac = np.asarray(jac)
-                x = np.asarray(x)
-
-                for a in xrange(1, self.p + 1):
+                for a in xrange(1, self.p + 1):  # loop to place element k, f into global K, F
                     i = self._lm(a, e)
-                    if i == 0:
-                        break
-                    for b in xrange(1, self.p + 1):
-                        m = self._lm(b, e)
-                        if m == 0:
-                            break
-                        k[i-1][m-1] += ddnx[a-1][0]*self.m_e * self.g_i * ddnx[b - 1][0] * jac[0][0] * w_s[j - 1]
-                    f[i - 1] += ne[a-1]*self._fa(x[0])*jac[0][0]*w_s[j-1]
+                    if i != 0:
+                        for b in xrange(1, self.p + 1):  # loop to place element k into global K
+                            m = self._lm(b, e)
+                            if m != 0:
+                                k[i-1][m-1] += ddnx[a-1]*self.m_e*self.g_i*ddnx[b-1]*jac*self.ws[j-1]
+                        f[i - 1] += ne[a-1]*self._fa(x)*jac*self.ws[j-1]
 
         k = np.asmatrix(k)
         return np.asarray(k.I * f)
+
+    def _basis_x(self, e, xc):
+
+        b_s = []  # collection of values for the basis functions at xc
+        db_s = []  # collection of values for the derivative of the basis functions at xc
+        ddb_s = []  # collection of the values for the double derivative of the basis functions at xc
+
+        for a in xrange(1, self.n_int + 1):  # loop over the local basis
+            basis = self._local_b(xc, a)
+            b_s.append(basis[0])
+            db_s.append(basis[1])
+            ddb_s.append(basis[2])
+
+        ce = self._get_c_e(e)
+        b_s = np.asarray(b_s)
+        db_s = np.asarray(db_s)
+        ddb_s = np.asarray(ddb_s)
+
+        ne, dne, ddne = self._local_n(b_s, db_s, ddb_s, ce)  # get local basis
+
+        dnx, ddnx, jac, x = self._global(ne, dne, ddne, self.xga[e - 1:e + self.p + 2])  # convert local to global
+
+        dnx = np.asarray(dnx).flatten()
+        ddnx = np.asarray(ddnx).flatten()
+        jac = np.asarray(jac)[0][0]
+        x = np.asarray(x).flatten()
+
+        return dnx, ddnx, jac, x, ne
 
     def _get_knot_vector(self):
         knot_vector = np.array(np.zeros(self.p + 1))
@@ -192,12 +184,6 @@ class FEM(object):
 
         return b, db, ddb
 
-    def _local_b_curves(self, xs, a):
-        b_curves = np.empty((len(xs)))
-        for i, x in enumerate(xs):
-            b_curves[i] = self.basis[0](a, x, self.p)
-        return b_curves
-
     def _local_n(self, b, db, ddb, ce):
 
         ce = np.matrix(ce)
@@ -250,10 +236,10 @@ class FEM(object):
         return e + a - 1
 
     def _id(self, global_a):
-        return self.id_array[global_a]
+        return self.id_array[global_a-1]
 
     def _construct_id(self):
-        id_array = np.empty(self.num_nodes)
+        id_array = np.zeros(self.num_nodes, dtype=int)
         num_eq = 0
         for i in xrange(self.num_nodes):
             skip = False
@@ -263,4 +249,6 @@ class FEM(object):
             if not skip:
                 num_eq += 1
                 id_array[i] = num_eq
+        for bc in self.bc:
+            id_array[bc[0]] = 0
         return id_array
