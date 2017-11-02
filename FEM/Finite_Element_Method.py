@@ -73,10 +73,10 @@ class FEM(object):
 
                 dnx, ddnx, jac, x, ne = self._basis_x(e, self.qs[j - 1])  # get values of global basis, x, and jac
 
-                for a in xrange(1, self.p + 1):  # loop to place element k, f into global K, F
+                for a in xrange(1, self.p + 2):  # loop to place element k, f into global K, F
                     i = self._lm(a, e)
                     if i != 0:
-                        for b in xrange(1, self.p + 1):  # loop to place element k into global K
+                        for b in xrange(1, self.p + 2):  # loop to place element k into global K
                             m = self._lm(b, e)
                             if m != 0:
                                 k[i-1][m-1] += ddnx[a-1]*self.m_e*self.g_i*ddnx[b-1]*jac*self.ws[j-1]
