@@ -18,6 +18,19 @@ def plot_graphs(x, y, title, p=None):
     plt.show()
 
 
+def plot_deflections(n, mx, exact, title, labels):
+
+    for i, p in enumerate(mx):
+        plt.plot(n, p, color=colors[i], marker='+', label=labels[i])
+
+    plt.plot((0, max(n)), (exact, exact), color='b', label='Exact')
+
+    plt.xlabel('Number of Nodes')
+    plt.ylabel('Tip Deflection')
+    plt.title(title)
+    plt.show()
+
+
 def plt_error(h, e, title):
 
     fig = plt.figure()

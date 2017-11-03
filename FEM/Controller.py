@@ -108,20 +108,24 @@ def plot_solutions(ns, funcs, eqs, ps, l):
     mod_e = 1000000.
     pol_i = b*(h**3.)/12.
     x = [np.arange(0., 1., .000001)]
+    max_deflection = []
+    exact = eqs[0](0)
 
     for i, func in enumerate(funcs):
-        for n in ns:
-            for p in ps:
+        for p in ps:
+            max_deflection.append([])
+            for n in ns:
                 model = FEM.FEM(n, [bernstein, d_bernstein, dd_bernstein], func, l=l, p=p, prop=(pol_i, mod_e))
                 uh, xh, d, xga = model.solve()
-
+                max_deflection[-1].append(max(uh[0]))
                 Pl.plot_graphs([x, xh], [[eqs[i](x[0])], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
 
+    Pl.plot_deflections(ns, max_deflection, exact, 'Deflection at Tip of Cantilever Beam', ['p=2', 'p=3'])
 
-n_list = [10]
+n_list = [1, 10, 100]
 func_list = [func_p2]
 eq_list = [beam_theory]
-p_list = [3]
-l = 1.
+p_list = [2, 3]
+length = 1.
 
-plot_solutions(n_list, func_list, eq_list, p_list, l)
+plot_solutions(n_list, func_list, eq_list, p_list, length)
