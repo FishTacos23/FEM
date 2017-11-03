@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 
 class FEM(object):
 
-    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1.), bc=((-1, 0), (-1, 0))):
+    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1.), bc=((-1, 0), (-2, 0))):
 
         self.n = n  # number of elements
         self.p = p  # degree
         self.num_nodes = p + n  # number of nodes
         self.num_basis = n - p - 1  # number of basis functions
         self.n_int = p + 1  # number of quadratures / basis per element
-        self.num_bc = 1  # number of boundary conditions
+        self.num_bc = len(bc)  # number of boundary conditions
 
         self.fun = fun  # forcing function
         self.basis = basis  # basis function
@@ -80,7 +80,7 @@ class FEM(object):
                         for b in xrange(1, self.p + 2):  # loop to place element k into global K
                             m = self._lm(b, e)
                             if m != 0:
-                                k[i-1][m-1] += dnx[a-1]*self.m_e*self.g_i*dnx[b-1]*jac*self.ws[j-1]
+                                k[i-1][m-1] += ddnx[a-1]*self.m_e*self.g_i*ddnx[b-1]*jac*self.ws[j-1]
                         f[i-1] += ne[a-1]*self._fa(x)*jac*self.ws[j-1]
 
         k = np.asmatrix(k)

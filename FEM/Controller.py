@@ -9,6 +9,11 @@ def func_x2(ex):
     return ex**2
 
 
+def func_p2(ex):
+    h = 0.005
+    return 10./h
+
+
 def linear(a, c, p):
 
     if a == 1:
@@ -54,6 +59,17 @@ def eq_x2(ex, g=0, h=0):
     return (-1. / 12.0) * (ex**4.0 - 1.0) - h*ex + g + h
 
 
+def beam_theory(ex):
+    w = func_p2(ex)
+    b = 0.005
+    h = 0.005
+    mod_e = 1000000.
+    pol_i = b * (h ** 3.) / 12.
+    l = 1.
+
+    return w*(ex**4 - 4*(l**3)*ex + 3*l**4)/(24*mod_e*pol_i)
+
+
 def plot_errors(ns, funcs, eqs):
 
     dhs = []
@@ -87,20 +103,24 @@ def plot_errors(ns, funcs, eqs):
 
 def plot_solutions(ns, funcs, eqs, ps, l):
 
+    b = 0.005
+    h = 0.005
+    mod_e = 1000000.
+    pol_i = b*(h**3.)/12.
     x = [np.arange(0., 1., .000001)]
 
     for i, func in enumerate(funcs):
         for n in ns:
             for p in ps:
-                model = FEM.FEM(n, [bernstein, d_bernstein, dd_bernstein], func, l=l, p=p)
+                model = FEM.FEM(n, [bernstein, d_bernstein, dd_bernstein], func, l=l, p=p, prop=(pol_i, mod_e))
                 uh, xh, d, xga = model.solve()
 
                 Pl.plot_graphs([x, xh], [[eqs[i](x[0])], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
 
 
 n_list = [10]
-func_list = [func_x2]
-eq_list = [eq_x2]
+func_list = [func_p2]
+eq_list = [beam_theory]
 p_list = [3]
 l = 1.
 
