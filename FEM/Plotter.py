@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-colors = ['r', 'g', 'b', 'orange']
+colors = ['r', 'g', 'b', 'orange', 'black']
 
 
 def plot_graphs(x, y, title, p=None):
@@ -23,7 +23,8 @@ def plot_deflections(n, mx, exact, title, labels):
     for i, p in enumerate(mx):
         plt.plot(n, p, color=colors[i], marker='+', label=labels[i])
 
-    plt.plot((0, max(n)), (exact, exact), color='b', label='Exact')
+    if exact is not None:
+        plt.plot((0, max(n)), (exact, exact), color='b', label='Exact')
 
     plt.xlabel('Number of Nodes')
     plt.ylabel('Tip Deflection')

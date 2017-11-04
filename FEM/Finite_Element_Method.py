@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 class FEM(object):
 
-    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1.), bc=((-1, 0), (-2, 0))):
+    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1.), bc=((-1, 0), (-2, 0)), h=None):
 
         self.n = n  # number of elements
         self.p = p  # degree
@@ -30,6 +30,7 @@ class FEM(object):
         self.xga = self._xga()  # global locations of the nodes
         self.id_array = self._construct_id()  # id array for location matrix
         self.qs, self.ws = self._get_quadratures()  # quadrature points and weighting values
+        self.h = h
 
     def solve(self):
 
@@ -226,7 +227,7 @@ class FEM(object):
 
     def _fa(self,  x):
 
-        return self.fun(x)
+        return self.fun(x, self.h)
 
     def _lm(self, a, e):
 
