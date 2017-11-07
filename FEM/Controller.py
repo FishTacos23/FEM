@@ -119,10 +119,10 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
                     model = FEM.FEM(n, [bernstein, d_bernstein, dd_bernstein], func, l=l, p=p, prop=(pol_i, mod_e), h=h)
                     uh, xh, d, xga = model.solve()
                     max_deflection[j].append(max(uh[0]))
-                    Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2')
+                    # Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2')
 
     max_deflection.append(exact)
-    Pl.plot_deflections(slenderness, max_deflection, None, 'Deflection at Tip of Cantilever Beam', ['h=.1', 'h=.01', 'h=.005', 'h=.002', 'h=.001'])
+    Pl.plot_deflections(slenderness, max_deflection, None, 'Deflection at Tip of Cantilever Beam', ['C1', 'C2', 'Exact'])
 
 n_list = [10]
 func_list = [func_p2]

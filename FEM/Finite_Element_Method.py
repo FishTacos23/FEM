@@ -154,7 +154,9 @@ class FEM(object):
     def _get_c_e(self, e):
 
         if self.p == 2:
-            if e == 1:
+            if self.n == 1:
+                return np.asarray([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]])
+            elif e == 1:
                 return np.asarray([[1., 0., 0.], [0., 1., .5], [0., 0., .5]])
             elif e == self.n:
                 return np.asarray([[.5, 0., 0.], [.5, 1., 0.], [0., 0., 1.]])
@@ -162,7 +164,9 @@ class FEM(object):
                 return np.asarray([[.5, 0., 0.], [.5, 1., .5], [0., 0., .5]])
 
         elif self.p == 3:
-            if e == 1:
+            if self.n == 1:
+                return np.asarray([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
+            elif e == 1:
                 return np.asarray([[1., 0., 0., 0.], [0., 1., .5, .25],
                                    [0., 0., .5, 7./12.], [0., 0., 0., 1./6.]])
             elif e == 2:
