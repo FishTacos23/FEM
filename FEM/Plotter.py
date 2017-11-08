@@ -24,6 +24,7 @@ def plt_error(h, e, title):
     ax = fig.add_subplot(1, 1, 1)
 
     for i in xrange(len(e)):
+        print 'h = ' + str(h[i]) + ', error = ' + str(e[i])
         line, = ax.plot(h, e[i], color=colors[i], lw=2)
 
     ax.set_yscale('log')

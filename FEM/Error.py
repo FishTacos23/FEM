@@ -1,34 +1,27 @@
 import math
 import numpy as np
+import Finite_Element_Method as fem
 
 
-def calc_error(he, dh, basis, equation, g=0, h=0):
+def calc_error(he, dh, basis, equation, model, g=0, h=0, p=2):
 
     s = 0
-    gc = [-math.sqrt(3./5.), 0., math.sqrt(3./5.)]
-    w = [5./9., 8./9., 5./9.]
+    element = model.n
+    gc = model.qs
+    w = model.ws
 
-    x = 0
+    for e in xrange(1, element+1):
+        for j, qs in enumerate(gc):
 
-    for i in xrange(len(he)):
-        for j in xrange(3):
+            dnx, ddnx, jac, x, ne = model._basis_x(e, qs)
 
-            x_loc = (gc[j] + 1.)*(he[i])/2. + x
+            u_val = equation(x)
 
-            u_val = equation(x_loc)
+            uh_val = 0
 
-            n2 = basis(2, gc[j])
-            n1 = basis(1, gc[j])
+            for a in xrange(1, p + 2):  # loop over the local basis
+                uh_val += ne[a-1]*dh[model._ien(e, a)-1]
 
-            if i < len(he)-1:
-                uh_val = n1*dh.item(i) + n2*dh.item(i+1)
-            else:
-                uh_val = n1*dh.item(i) + n2*g
-
-            dxdc = he[i]/2.
-
-            s += (math.pow((u_val - uh_val), 2.)*dxdc*w[j])
-
-        x += he[i]
+            s += (math.pow((u_val - uh_val), 2.)*jac*w[j])
 
     return math.sqrt(s)
