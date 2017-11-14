@@ -112,6 +112,11 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
         exact.append(eqs[0](0, h))
         exact.append(eqs[0](0, h))
         exact.append(eqs[0](0, h))
+        exact.append(eqs[0](0, h))
+        exact.append(eqs[0](0, h))
+        exact.append(eqs[0](0, h))
+        exact.append(eqs[0](0, h))
+        exact.append(eqs[0](0, h))
         pol_i = b*(h**3.)/12.
         slenderness.append(l/h)
 
@@ -120,8 +125,8 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
                 for n in ns:
                     model = FEM.FEM(n, [bernstein, d_bernstein, dd_bernstein], func, l=l, p=p, prop=(pol_i, mod_e), h=h)
                     uh, xh, d, xga = model.solve()
-                    max_deflection[j].append(max(uh[0]))
-                    Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2')
+                    max_deflection[j].append((d[0]))
+                    Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
 
     max_deflection.append(exact)
     Pl.plot_deflections(ns, max_deflection, None, 'Deflection at Tip of Cantilever Beam', ['C1', 'C2', 'Exact'])
@@ -130,7 +135,7 @@ func_list = [func_p2]
 eq_list = [beam_theory]
 p_list = [2, 3]
 length = 1.
-n_list = [1, 10, 100]
+n_list = [1, 4, 8, 10, 16, 32, 64, 100]
 h_list = [.005]
 
 # n_list = [10]

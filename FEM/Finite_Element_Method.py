@@ -1,6 +1,5 @@
 import numpy as np
 import math
-import matplotlib.pyplot as plt
 
 
 class FEM(object):
@@ -52,7 +51,7 @@ class FEM(object):
 
             for i in xrange(len(xc)):  # loop over each xc value
 
-                dnx, ddnx, jac, x_pos, ne = self._basis_x(e, xc[i])  # get basis and x
+                dnx, ddnx, jac, x_pos, ne, dne = self._basis_x(e, xc[i])  # get basis and x
                 xe[i] = x_pos
 
                 for a in xrange(1, self.p + 2):
@@ -73,7 +72,7 @@ class FEM(object):
 
             for j in xrange(1, self.n_int + 1):  # loop over quadrature points
 
-                dnx, ddnx, jac, x, ne = self._basis_x(e, self.qs[j - 1])  # get values of global basis, x, and jac
+                dnx, ddnx, jac, x, ne, dne = self._basis_x(e, self.qs[j - 1])  # get values of global basis, x, and jac
 
                 for a in xrange(1, self.p + 2):  # loop to place element k, f into global K, F
                     i = self._lm(a, e)
@@ -113,7 +112,7 @@ class FEM(object):
         jac = np.asarray(jac)[0][0]
         x = np.asarray(x).flatten()
 
-        return dnx, ddnx, jac, x, ne
+        return dnx, ddnx, jac, x, ne, dne
 
     def _get_knot_vector(self):
         knot_vector = np.array(np.zeros(self.p + 1))
