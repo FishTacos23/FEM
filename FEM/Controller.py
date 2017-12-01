@@ -5,6 +5,9 @@ import Error as Er
 import math
 
 
+# TODO questions: Can I hard code 6 dof? Can I look for
+
+
 def func_x2(ex):
     return ex**2.
 
@@ -24,7 +27,25 @@ def linear(a, c, p):
     return n
 
 
-def bernstein(a, gc, p):
+def uniform_axial_loading(ex):
+    f = np.asarray([0, 0, 10, 0, 0, 0])
+    return f
+
+
+def non_uniform_axial_loading(ex):
+    f = np.asarray([0, 0, 10*ex, 0, 0, 0])
+    return f
+
+
+def uniform_axial_deformation(ex):
+    return 10
+
+
+def non_uniform_axial_deformation(ex):
+    return 10*ex
+
+
+def bern(a, gc, p):
     f1 = (1/(2**float(p)))
     f2 = (math.factorial(p)/(math.factorial(a-1)*math.factorial(p-a+1)))
     f3 = ((1.-gc)**(p-float(a)+1.))
@@ -33,7 +54,7 @@ def bernstein(a, gc, p):
     return f1*float(f2)*f3*f4
 
 
-def d_bernstein(a, gc, p):
+def d_bern(a, gc, p):
     f1 = (1 / (2 ** float(p)))
     f2 = (math.factorial(p) / (math.factorial(a - 1) * math.factorial(p - a + 1)))
     f3 = ((1. - gc) ** (p - float(a)))
@@ -43,7 +64,7 @@ def d_bernstein(a, gc, p):
     return f1*float(f2)*f3*f4*f5
 
 
-def dd_bernstein(a, gc, p):
+def dd_bern(a, gc, p):
     f1 = (1 / (2 ** float(p)))
     f2 = (math.factorial(p) / (math.factorial(a - 1) * math.factorial(p - a + 1)))
     f3 = ((1. - gc) ** (p - float(a) - 1.))
@@ -66,6 +87,11 @@ def beam_theory(ex, h):
     l = 1.
 
     return w*(ex**4 - 4*(l**3)*ex + 3*l**4)/(24*mod_e*pol_i)
+
+
+def axial_beam_theory(ex, e, a):
+    n = uniform_axial_deformation(ex)
+    return n*ex/(e*a)
 
 
 def plot_errors(ns, funcs, eqs):
@@ -123,22 +149,20 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
         for i, func in enumerate(funcs):
             for j, p in enumerate(ps):
                 for n in ns:
-                    model = FEM.FEM(n, [bernstein, d_bernstein, dd_bernstein], func, l=l, p=p, prop=(pol_i, mod_e), h=h)
-                    uh, xh, d, xga = model.solve()
-                    max_deflection[j].append((d[0]))
-                    Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
+                    model = FEM.FEM(n, [bern, d_bern, dd_bern], func, l=l, p=p, prop=(pol_i, mod_e), h=h, dof=6)
+                    dx, dy, dz, x, y, z = model.solve()
+                    max_deflection[j].append((dx[0]))
+                    # Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
+                    Pl.animated_plot(x, dx, y, dy, z, dz)
 
-    max_deflection.append(exact)
-    Pl.plot_deflections(ns, max_deflection, None, 'Deflection at Tip of Cantilever Beam', ['C1', 'C2', 'Exact'])
+    # max_deflection.append(exact)
+    # Pl.plot_deflections(ns, max_deflection, None, 'Deflection at Tip of Cantilever Beam', ['C1', 'C2', 'Exact'])
 
-func_list = [func_p2]
+func_list = [uniform_axial_loading]
 eq_list = [beam_theory]
-p_list = [2, 3]
+p_list = [2]
 length = 1.
-n_list = [1, 4, 8, 10, 16, 32, 64, 100]
+n_list = [10]
 h_list = [.005]
-
-# n_list = [10]
-# h_list = [.1, 0.01, .005, .002, .001]
 
 plot_solutions(n_list, func_list, eq_list, p_list, length, h_list)
