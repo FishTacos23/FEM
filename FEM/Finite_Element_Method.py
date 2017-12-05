@@ -233,7 +233,10 @@ class FEM(object):
 
     def _get_c_e(self, e):
 
-        if self.p == 2:
+        if self.p == 1:
+            return np.asarray([[1., 0.], [0., 1.]])
+
+        elif self.p == 2:
             if self.n == 1:
                 return np.asarray([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]])
             elif e == 1:

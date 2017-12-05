@@ -38,7 +38,7 @@ def non_uniform_axial_loading(ex):
 
 
 def uniform_axial_deformation(ex):
-    return 10
+    return 100000000
 
 
 def non_uniform_axial_deformation(ex):
@@ -128,9 +128,7 @@ def plot_errors(ns, funcs, eqs):
 def plot_solutions(ns, funcs, eqs, ps, l, hs):
 
     x = [np.arange(0., 1., .000001)]
-    max_deflection = [[], []]
-    exact = []
-    slenderness = []
+    max_deflection = []
     b = 0.005
     mod_e = 10000000.
     v = .33
@@ -140,19 +138,9 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
     i1 = math.pi*(r**4.)/4.
     i2 = i1
     ip = i1*2.
+    exact = axial_beam_theory(l, mod_e, a)
 
     for h in hs:
-        exact.append(eqs[0](0, h))
-        exact.append(eqs[0](0, h))
-        exact.append(eqs[0](0, h))
-        exact.append(eqs[0](0, h))
-        exact.append(eqs[0](0, h))
-        exact.append(eqs[0](0, h))
-        exact.append(eqs[0](0, h))
-        exact.append(eqs[0](0, h))
-        pol_i = b*(h**3.)/12.
-        slenderness.append(l/h)
-
         for i, func in enumerate(funcs):
             for j, p in enumerate(ps):
                 for n in ns:
@@ -160,19 +148,17 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
                     model = FEM.FEM(n, [bern, d_bern, dd_bern], func, l=l, p=p,
                                     prop=(i1, i2, mod_e, v, g, ip, a), h=h)
                     dx, dy, dz, x, y, z = model.solve()
-                    max_deflection[j].append((dx[0]))
+                    max_deflection.append((dx[0]))
                     # Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
-                    Pl.animated_plot(x, dx, y, dy)
-                    # Pl.new_plot(x, dx, y, dy, z, dz)
+                    # Pl.animated_plot(x, dx, y, dy)
 
-    # max_deflection.append(exact)
-    # Pl.plot_deflections(ns, max_deflection, None, 'Deflection at Tip of Cantilever Beam', ['C1', 'C2', 'Exact'])
+    Pl.plot_deflections(ns, max_deflection, exact, 'Deflection at Tip of Cantilever Beam', ['N=1', 'N=10', 'Exact'])
 
 func_list = [uniform_axial_loading]
 eq_list = [beam_theory]
-p_list = [2]
+p_list = [1]
 length = 1.
-n_list = [10]
+n_list = [1, 10]
 h_list = [.005]
 
 plot_solutions(n_list, func_list, eq_list, p_list, length, h_list)

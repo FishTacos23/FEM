@@ -99,8 +99,10 @@ def update_animation(num, dataLines, lines):
 
 def plot_deflections(n, mx, exact, title, labels):
 
+    print exact
+
     for i, p in enumerate(mx):
-        plt.plot(n, p, color=colors[i], marker='+', label=labels[i])
+        plt.plot(n[i], p, color=colors[i], marker='o', label=labels[i])
 
     if exact is not None:
         plt.plot((0, max(n)), (exact, exact), color='b', label='Exact')
