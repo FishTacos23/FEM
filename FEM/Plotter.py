@@ -42,7 +42,7 @@ def animated_plot(x, dx, y, dy):
     ax = fig.add_subplot(111, autoscale_on=False, xlim=(-2, 2), ylim=(-2, 2))
     ax.grid()
 
-    line, = ax.plot([], [], 'o-', lw=2)
+    line, = ax.plot([], [], 'r+', lw=2)
     time_template = 'time = %.1fs'
     time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
     ax.set_xlim([(min(x)-min(dx))*1.1, (max(x)+max(dx))*1.1])

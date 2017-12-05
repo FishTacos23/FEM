@@ -48,14 +48,16 @@ class FEM(object):
     def solve(self):
 
         d_n, ax, n_list = self._solve_d()  # solve for displacements of non-zero nodes
+        xc = np.linspace(-0.9999, 0.9999, 100)
+        #
+        # x = []
+        # for i in xrange(len(ax)):
+        #     x.append(ax[i][0])
+        #
+        # y = [0.]*len(x)
+        # z = [0.]*len(x)
 
         x = []
-        for i in xrange(len(ax)):
-            x.append(ax[i][0])
-
-        y = [0.]*len(x)
-        z = [0.]*len(x)
-
         w_theta = []
 
         d_i = 0
@@ -70,13 +72,20 @@ class FEM(object):
                 d_i += 1
 
         for e in xrange(1, self.n+1):  # loop over elements
-            w_theta_e = np.zeros((len(n_list[e-1]), self.dof))
-            for i in xrange(len(n_list[e-1])):  # loop over each xc value
+            n_e_list = []
+            for iii in xrange(len(xc)):
+                dnx, ddnx, jac, gx, ne, dne = self._basis_x(e, xc[iii])  # get values of global basis, x, and jac
+                x.append(gx)
+                n_e_list.append(ne)
+            w_theta_e = np.zeros((len(xc), self.dof))
+            for i in xrange(len(n_e_list)):  # loop over each xc value
                 for ii in xrange(self.dof):
                     for a in xrange(1, self.p + 2):
-                        w_theta_e[i][ii] += n_list[e-1][i][a-1]*d[(self._ien(e, a)-1)*self.dof+ii]
+                        w_theta_e[i][ii] += n_e_list[i][a-1]*d[(self._ien(e, a)-1)*self.dof+ii]
             w_theta.append(w_theta_e)
 
+        y = [0.]*len(x)
+        z = [0.]*len(x)
         dx = []
         dy = []
         dz = []
