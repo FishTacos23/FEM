@@ -4,7 +4,8 @@ import math
 
 class FEM(object):
 
-    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1.), bc=((-1, 0, 0), (-2, 0, 0)), h=None, dof=6):
+    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1., 1., 1., 1., 1., 1.),
+                 bc=((-1, 0, 0), (-1, 1, 0), (-1, 2, 0), (-1, 3, 0), (-1, 4, 0), (-1, 5, 0)), h=None):
 
         self.n = n  # number of elements
         self.p = p  # degree
@@ -13,7 +14,7 @@ class FEM(object):
         self.n_int = p + 1  # number of quadratures / basis per element
         self.num_bc = len(bc)  # number of boundary conditions
 
-        self.dof = dof  # number of degrees of freedom per node
+        self.dof = 6  # number of degrees of freedom per node
 
         self.fun = fun  # forcing function
         self.basis = basis  # basis function
@@ -25,8 +26,13 @@ class FEM(object):
             else:
                 self.bc.append([self.num_nodes+bc[i][0], bc[i][1], bc[i][2]])
 
-        self.g_i = prop[0]  # polar moment of inertia (I)
-        self.m_e = prop[1]  # Modulus of Elasticity (E)
+        self.i1 = prop[0]  # moment of inertia (I1)
+        self.i2 = prop[1]  # moment of inertia (I1)
+        self.m_e = prop[2]  # Modulus of Elasticity (E)
+        self.v = prop[3]  # poisson's ration (nu)
+        self.g = prop[4]  # Shear Modulus of Elasticity (G)
+        self.j = prop[5]  # polar moment of inertia (Ip)
+        self.a = prop[6]  # Area
 
         if l is None:
             self.l = float(n)
@@ -41,43 +47,51 @@ class FEM(object):
 
     def solve(self):
 
-        d_n, x, n_list = self._solve_d()  # solve for displacements of non-zero nodes
+        d_n, ax, n_list = self._solve_d()  # solve for displacements of non-zero nodes
 
-        u = []
+        x = []
+        for i in xrange(len(ax)):
+            x.append(ax[i][0])
 
+        y = [0.]*len(x)
+        z = [0.]*len(x)
+
+        w_theta = []
+
+        d_i = 0
+        dn_i = 0
         d = np.zeros((self.num_nodes*self.dof, 1))  # place zero value nodes in d
         for a in xrange(1, len(self.xga)+1):
             for b in xrange(1, self.dof+1):
                 n_id = self.id_mat[a-1][b-1]
                 if n_id != 0:
-                    d[n_id-1] = d_n[n_id-1]
+                    d[d_i] = d_n[dn_i]
+                    dn_i += 1
+                d_i += 1
 
         for e in xrange(1, self.n+1):  # loop over elements
-            ue = np.zeros((len(n_list[e-1])))
+            w_theta_e = np.zeros((len(n_list[e-1]), self.dof))
             for i in xrange(len(n_list[e-1])):  # loop over each xc value
-                for a in xrange(1, self.p + 2):
-                    ue[i] += n_list[e-1][i][a-1]*d[self._ien(e, a)-1]  # TODO fix which d you r grabbing and possibly n
-
-            u.append(ue)
+                for ii in xrange(self.dof):
+                    for a in xrange(1, self.p + 2):
+                        w_theta_e[i][ii] += n_list[e-1][i][a-1]*d[(self._ien(e, a)-1)*self.dof+ii]
+            w_theta.append(w_theta_e)
 
         dx = []
         dy = []
         dz = []
 
-        i = 0
-        while i < len(u)/self.dof:
-            dz.append(u[i])
-            dy.append(u[i+1])
-            dx.append(u[i+2])
-            i += 6
-
-        y = [0.]*len(x)
-        z = [0.]*len(x)
+        for e in w_theta:
+            for p in e:
+                dz.append(p[0]-y[len(dy)]*p[5])
+                dy.append(p[1]+x[len(dz)-1]*p[5])
+                dx.append(p[2]-x[len(dz)-1]*p[4]+y[len(dy)-1]*p[3])
 
         return dx, dy, dz, x, y, z
 
     def _solve_d(self):
 
+        b_d = self._get_big_d()
         k = np.zeros((self.num_nodes*self.dof-self.num_bc, self.num_nodes*self.dof-self.num_bc), dtype=float)
         f = np.zeros((self.num_nodes*self.dof-self.num_bc, 1), dtype=float)  # global F
         x_list = []
@@ -85,28 +99,38 @@ class FEM(object):
 
         for e in xrange(1, self.n + 1):  # loop over elements
             n_el_list = []
+            ke = np.zeros(((self.p+1)*self.dof, (self.p+1)*self.dof), dtype=float)
+            fe = np.zeros(((self.p+1)*self.dof), dtype=float)
             for j in xrange(1, self.n_int + 1):  # loop over quadrature points
-
                 dnx, ddnx, jac, x, ne, dne = self._basis_x(e, self.qs[j - 1])  # get values of global basis, x, and jac
                 big_f = self.fun(x)
                 x_list.append(x)
                 n_el_list.append(ne)
-
                 for a in xrange(1, self.p + 2):  # loop to place element k, f into global K, F
+                    ba = self._get_big_b(ne, dnx, a)
                     for b in xrange(1, self.p + 2):  # loop to place element k into global K
-                        ba = self._get_big_b(ne, dnx, a)
                         bb = self._get_big_b(ne, dnx, b)
-                        bdb = np.asarray((ba.T * np.matrix(np.identity(self.dof, dtype=float)) * bb))
+                        bdb = np.asarray(ba.T * b_d * bb)
                         for i_dof in xrange(1, self.dof+1):
                             for j_dof in xrange(1, self.dof+1):
-                                i = self._lm(a, e, i_dof)
-                                if i != 0:
+                                ke[(a-1)*self.dof+i_dof-1][(b-1)*self.dof+j_dof-1] += bdb[i_dof-1][j_dof-1]*jac*self.ws[j-1]
+                for a in xrange(1, self.p + 2):
+                    for i_dof in xrange(1, self.dof+1):
+                            fe[(a-1)*self.dof+i_dof-1] += ne[a-1]*big_f[i_dof-1]*jac*self.ws[j-1]
+                for a in xrange(1, self.p+2):
+                    for i_dof in xrange(1, self.dof+1):
+                        i = self._lm(a, e, i_dof)
+                        if i != 0:
+                            for b in xrange(1, self.p+2):
+                                for j_dof in xrange(1, self.dof+1):
                                     m = self._lm(b, e, j_dof)
                                     if m != 0:
-                                        k[i-1][m-1] += bdb[i_dof-1][j_dof-1]*self.m_e*self.g_i*jac*self.ws[j-1]
-                                        # k[(a-1)*self.dof+i_dof-1][(b-1)*self.dof+j_dof-1] += bdb[i_dof-1][j_dof-1]*self.m_e*self.g_i*jac*self.ws[j-1]
-                                    f[i-1] += ne[a-1]*big_f[i_dof-1]*jac*self.ws[j-1]
-                                    # f[(a-1)*self.dof+i_dof-1] += ne[a-1]*big_f[i_dof-1]*jac*self.ws[j-1]
+                                        k[i-1][m-1] += ke[(a-1)*self.dof+i_dof-1][(b-1)*self.dof+j_dof-1]
+                for a in xrange(1, self.p+2):
+                    for i_dof in xrange(1, self.dof+1):
+                        i = self._lm(a, e, i_dof)
+                        if i != 0:
+                            f[i-1] += fe[(a-1)*self.dof+i_dof-1]
             n_list.append(n_el_list)
 
         k = np.asmatrix(k)
@@ -151,6 +175,16 @@ class FEM(object):
         big_b[4][4] = dn[i-1]
         big_b[5][5] = dn[i-1]
         return np.matrix(big_b)
+
+    def _get_big_d(self):
+        big_d = np.zeros((self.dof, self.dof), dtype=float)
+        big_d[0][0] = self.m_e*self.a
+        big_d[1][1] = self.g*self.a*5./6.
+        big_d[2][2] = self.g*self.a*5./6.
+        big_d[3][3] = self.m_e*self.i1
+        big_d[4][4] = self.m_e*self.i2
+        big_d[5][5] = self.g*self.j
+        return np.matrix(big_d)
 
     def _get_knot_vector(self):
         knot_vector = np.array(np.zeros(self.p + 1))

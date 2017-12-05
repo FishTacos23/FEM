@@ -22,6 +22,20 @@ def plot_graphs(x, y, title, p=None):
     plt.show()
 
 
+def new_plot(x, dx, y, dy, z, dz):
+    f = 100
+    tx = []
+    tz = []
+
+    for ii in xrange(len(x)):
+        tx.append(x[ii]+dx[ii]*f)
+        tz.append(1.)
+
+    plt.plot(x, z, 'r+')
+    plt.plot(tx, tz, 'bv')
+    plt.show()
+
+
 def animated_plot(x, dx, y, dy, z, dz):
 
     # Attaching 3D axis to the figure
@@ -44,19 +58,21 @@ def animated_plot(x, dx, y, dy, z, dz):
     dt = 0.05
     t = np.arange(0.0, 20, dt)
 
-    def animate(i):
-        factor = math.sin(2. * math.pi * float(i) / float(intervals))
+    test_y = [math.sin(i*2*math.pi) for i in np.linspace(0., 2.*math.pi, len(y))]
+
+    def animate(q):
+        factor = math.sin(2. * math.pi * float(q) / float(intervals))
         this_x = []
         this_y = []
         this_z = []
 
         for j in xrange(len(x)):
             this_x.append(x[j] + dx[j] * factor)
-            this_y.append(y[j] + dy[j] * factor)
+            this_y.append(test_y[j] + dy[j] * factor)
             this_z.append(z[j] + dz[j] * factor)
 
         line.set_data(this_z, this_y)
-        time_text.set_text(time_template % (i*dt))
+        time_text.set_text(time_template % (q*dt))
         return line, time_text
 
     def init():
