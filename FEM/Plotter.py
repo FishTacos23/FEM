@@ -36,42 +36,33 @@ def new_plot(x, dx, y, dy, z, dz):
     plt.show()
 
 
-def animated_plot(x, dx, y, dy, z, dz):
+def animated_plot(x, dx, y, dy):
 
-    # Attaching 3D axis to the figure
     fig = plt.figure()
-    ax = p3.Axes3D(fig)
-    line, = ax.plot(z, y, zs=x)
+    ax = fig.add_subplot(111, autoscale_on=False, xlim=(-2, 2), ylim=(-2, 2))
+    ax.grid()
 
+    line, = ax.plot([], [], 'o-', lw=2)
     time_template = 'time = %.1fs'
-    time_text = ax.text(0.05, 0.9, 0.0, '', transform=ax.transAxes)
+    time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+    ax.set_xlim([(min(x)-min(dx))*1.1, (max(x)+max(dx))*1.1])
 
     # Setting the axes properties
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
-
-    ax.set_title('3D Test')
-
     intervals = 50
 
     dt = 0.05
     t = np.arange(0.0, 20, dt)
 
-    test_y = [math.sin(i*2*math.pi) for i in np.linspace(0., 2.*math.pi, len(y))]
-
     def animate(q):
         factor = math.sin(2. * math.pi * float(q) / float(intervals))
         this_x = []
         this_y = []
-        this_z = []
 
         for j in xrange(len(x)):
             this_x.append(x[j] + dx[j] * factor)
-            this_y.append(test_y[j] + dy[j] * factor)
-            this_z.append(z[j] + dz[j] * factor)
+            this_y.append(y[j] + dy[j] * factor)
 
-        line.set_data(this_z, this_y)
+        line.set_data(this_x, this_y)
         time_text.set_text(time_template % (q*dt))
         return line, time_text
 
@@ -81,7 +72,7 @@ def animated_plot(x, dx, y, dy, z, dz):
         return line, time_text
 
     # Creating the Animation object
-    ani = animation.FuncAnimation(fig, animate, frames=100, interval=50, blit=True, init_func=init)
+    ani = animation.FuncAnimation(fig, animate, np.arange(1, len(y)), interval=intervals, blit=True, init_func=init)
     plt.show()
 
 

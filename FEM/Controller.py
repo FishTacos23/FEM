@@ -162,8 +162,8 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
                     dx, dy, dz, x, y, z = model.solve()
                     max_deflection[j].append((dx[0]))
                     # Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
-                    # Pl.animated_plot(x, dx, y, dy, z, dz)
-                    Pl.new_plot(x, dx, y, dy, z, dz)
+                    Pl.animated_plot(x, dx, y, dy)
+                    # Pl.new_plot(x, dx, y, dy, z, dz)
 
     # max_deflection.append(exact)
     # Pl.plot_deflections(ns, max_deflection, None, 'Deflection at Tip of Cantilever Beam', ['C1', 'C2', 'Exact'])
