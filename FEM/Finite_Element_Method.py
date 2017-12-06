@@ -5,7 +5,7 @@ import math
 class FEM(object):
 
     def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1., 1., 1., 1., 1., 1.),
-                 bc=((-1, 0, 0), (-1, 1, 0), (-1, 2, 0), (-1, 3, 0), (-1, 4, 0), (-1, 5, 0)), h=None):
+                 bc=((0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 3, 0), (0, 4, 0), (0, 5, 0)), h=None):
 
         self.n = n  # number of elements
         self.p = p  # degree

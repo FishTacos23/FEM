@@ -54,7 +54,7 @@ def animated_plot(x, dx, y, dy):
     t = np.arange(0.0, 20, dt)
 
     def animate(q):
-        factor = math.sin(2. * math.pi * float(q) / float(intervals))
+        factor = math.sin(math.pi * float(q) / float(intervals))
         this_x = []
         this_y = []
 
@@ -72,7 +72,7 @@ def animated_plot(x, dx, y, dy):
         return line, time_text
 
     # Creating the Animation object
-    ani = animation.FuncAnimation(fig, animate, np.arange(1, len(y)), interval=intervals, blit=True, init_func=init)
+    ani = animation.FuncAnimation(fig, animate, np.arange(1, intervals), interval=intervals, blit=True, init_func=init)
     plt.show()
 
 

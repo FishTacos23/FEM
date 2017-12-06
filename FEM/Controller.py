@@ -28,7 +28,7 @@ def linear(a, c, p):
 
 
 def uniform_axial_loading(ex):
-    f = np.asarray([0, 0, 100000000, 0, 0, 0])
+    f = np.asarray([0, 0, 100000, 0, 0, 0])
     return f
 
 
@@ -38,7 +38,7 @@ def non_uniform_axial_loading(ex):
 
 
 def uniform_axial_deformation(ex):
-    return 100000000
+    return 100000
 
 
 def non_uniform_axial_deformation(ex):
@@ -133,7 +133,7 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
     mod_e = 10000000.
     v = .33
     g = 3770000.
-    r = 12.
+    r = .1
     a = math.pi*(r**2.)
     i1 = math.pi*(r**4.)/4.
     i2 = i1
@@ -148,9 +148,9 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
                     model = FEM.FEM(n, [bern, d_bern, dd_bern], func, l=l, p=p,
                                     prop=(i1, i2, mod_e, v, g, ip, a), h=h)
                     dx, dy, dz, x, y, z = model.solve()
-                    max_deflection.append((dx[0]))
+                    max_deflection.append(max(dx))
                     # Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
-                    # Pl.animated_plot(x, dx, y, dy)
+                    Pl.animated_plot(x, dx, y, dy)
 
     Pl.plot_deflections(ns, max_deflection, exact, 'Deflection at Tip of Cantilever Beam', ['N=1', 'N=10', 'Exact'])
 
