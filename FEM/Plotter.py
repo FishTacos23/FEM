@@ -22,18 +22,16 @@ def plot_graphs(x, y, title, p=None):
     plt.show()
 
 
-def new_plot(x, dx, y, dy, z, dz):
-    f = 100
-    tx = []
-    tz = []
+def new_plot(xs, dys, rots, labels):
 
-    for ii in xrange(len(x)):
-        tx.append(x[ii]+dx[ii]*f)
-        tz.append(1.)
+    for i in xrange(len(dys)):
+        plt.plot(xs[i], dys[i], label=labels[i])
 
-    plt.plot(x, z, 'r+')
-    plt.plot(tx, tz, 'bv')
     plt.show()
+    #
+    # for i in xrange(len(rots)):
+    #     plt.plot(xs[i], rots[i], label=labels[i])
+    # plt.show()
 
 
 def animated_plot(x, dx, y, dy):

@@ -28,21 +28,33 @@ def linear(a, c, p):
 
 
 def uniform_axial_loading(ex):
-    f = np.asarray([0, 0, 100000, 0, 0, 0])
+    f = np.asarray([0., 0., 100000., 0., 0., 0.])
     return f
 
 
 def non_uniform_axial_loading(ex):
-    f = np.asarray([0, 0, 1*ex, 0, 0, 0])
+    f = np.asarray([0., 0., 100000.*ex, 0., 0., 0.])
     return f
 
 
+def transverse_loading(ex):
+    return np.asarray([0., 10000., 0., 0., 0., 0.])
+
+
 def uniform_axial_deformation(ex):
-    return 100000
+    return 100000.
 
 
 def non_uniform_axial_deformation(ex):
-    return 10*ex
+    return 100000.*ex
+
+
+def transverse_deformation(ex, e_, i_):
+    return 10000.*(ex**4.)/(8.*e_*i_)
+
+
+def transverse_rot(ex, e_, i_):
+    return 10000.*(ex**3.)/(6.*e_*i_)
 
 
 def bern(a, gc, p):
@@ -127,7 +139,7 @@ def plot_errors(ns, funcs, eqs):
 
 def plot_solutions(ns, funcs, eqs, ps, l, hs):
 
-    x = [np.arange(0., 1., .000001)]
+    x = [np.arange(0., l, .0001)]
     max_deflection = []
     b = 0.005
     mod_e = 10000000.
@@ -139,6 +151,17 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
     i2 = i1
     ip = i1*2.
     exact = axial_beam_theory(l, mod_e, a)
+    exact_def = [transverse_deformation(xi, mod_e, i1) for xi in x]
+    exact_rot = [transverse_rot(xi, mod_e, i1) for xi in x]
+    defs = []
+    rots = []
+    labels = []
+    x_s = []
+
+    x_s.append(x)
+    defs.append(exact_def)
+    rots.append(exact_rot)
+    labels.append('EXACT SOLUTION')
 
     for h in hs:
         for i, func in enumerate(funcs):
@@ -147,18 +170,23 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
 
                     model = FEM.FEM(n, [bern, d_bern, dd_bern], func, l=l, p=p,
                                     prop=(i1, i2, mod_e, v, g, ip, a), h=h)
-                    dx, dy, dz, x, y, z = model.solve()
+                    dx, dy, dz, x, y, z, xt, yt, zt = model.solve()
                     max_deflection.append(max(dx))
                     # Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
-                    Pl.animated_plot(x, dx, y, dy)
+                    # Pl.animated_plot(x, dx, y, dy)
+                    defs.append(dy)
+                    rots.append(zt)
+                    x_s.append(x)
+                    labels.append('P='+str(p)+' N='+str(n))
 
-    Pl.plot_deflections(ns, max_deflection, exact, 'Deflection at Tip of Cantilever Beam', ['N=1', 'N=10', 'Exact'])
+    # Pl.plot_deflections(ns, max_deflection, exact, 'Deflection at Tip of Cantilever Beam', ['N=1', 'N=10', 'Exact'])
+    Pl.new_plot(x_s, defs, rots, labels)
 
-func_list = [uniform_axial_loading]
+func_list = [transverse_loading]
 eq_list = [beam_theory]
-p_list = [1]
+p_list = [1, 2, 3]
 length = 1.
-n_list = [1, 10]
+n_list = [10, 100]
 h_list = [.005]
 
 plot_solutions(n_list, func_list, eq_list, p_list, length, h_list)

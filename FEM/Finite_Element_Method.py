@@ -5,7 +5,7 @@ import math
 class FEM(object):
 
     def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1., 1., 1., 1., 1., 1.),
-                 bc=((0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 3, 0), (0, 4, 0), (0, 5, 0)), h=None):
+                 bc=((0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 5, 0), (-1, 0, 0), (-1, 1, 0)), h=None):
 
         self.n = n  # number of elements
         self.p = p  # degree
@@ -48,7 +48,7 @@ class FEM(object):
     def solve(self):
 
         d_n, ax, n_list = self._solve_d()  # solve for displacements of non-zero nodes
-        xc = np.linspace(-0.9999, 0.9999, 100)
+        xc = np.linspace(-0.9999, 0.9999, 10)
         #
         # x = []
         # for i in xrange(len(ax)):
@@ -90,13 +90,20 @@ class FEM(object):
         dy = []
         dz = []
 
+        x_thetas = []
+        y_thetas = []
+        z_thetas = []
+
         for e in w_theta:
             for p in e:
+                z_thetas.append(p[3])
+                y_thetas.append(p[4])
+                x_thetas.append(p[5])
                 dz.append(p[0]-y[len(dy)]*p[5])
                 dy.append(p[1]+x[len(dz)-1]*p[5])
                 dx.append(p[2]-x[len(dz)-1]*p[4]+y[len(dy)-1]*p[3])
 
-        return dx, dy, dz, x, y, z
+        return dx, dy, dz, x, y, z, x_thetas, y_thetas, z_thetas
 
     def _solve_d(self):
 
