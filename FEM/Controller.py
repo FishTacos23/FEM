@@ -137,7 +137,7 @@ def plot_errors(ns, funcs, eqs):
     Pl.plt_error(hs, e, 'Error')
 
 
-def plot_solutions(ns, funcs, eqs, ps, l, hs):
+def plot_solutions(ns, funcs, eqs, ps, l, hs, bc):
 
     x = [np.arange(0., l, .0001)]
     max_deflection = []
@@ -145,7 +145,7 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
     mod_e = 10000000.
     v = .33
     g = 3770000.
-    r = .1
+    r = 1
     a = math.pi*(r**2.)
     i1 = math.pi*(r**4.)/4.
     i2 = i1
@@ -166,27 +166,42 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs):
     for h in hs:
         for i, func in enumerate(funcs):
             for j, p in enumerate(ps):
+                max_n_deflect = []
                 for n in ns:
 
                     model = FEM.FEM(n, [bern, d_bern, dd_bern], func, l=l, p=p,
-                                    prop=(i1, i2, mod_e, v, g, ip, a), h=h)
+                                    prop=(i1, i2, mod_e, v, g, ip, a), h=h, bc=bc)
                     dx, dy, dz, x, y, z, xt, yt, zt = model.solve()
-                    max_deflection.append(max(dx))
+                    max_n_deflect.append(max(dy))
                     # Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
                     # Pl.animated_plot(x, dx, y, dy)
-                    defs.append(dy)
-                    rots.append(zt)
-                    x_s.append(x)
-                    labels.append('P='+str(p)+' N='+str(n))
 
-    # Pl.plot_deflections(ns, max_deflection, exact, 'Deflection at Tip of Cantilever Beam', ['N=1', 'N=10', 'Exact'])
-    Pl.new_plot(x_s, defs, rots, labels)
+                    # p_x = []
+                    # for q in xrange(len(x)):
+                    #     p_x.append(x[q]+dx[q])
+                    # defs.append(p_x)
 
+                    # defs.append(dy)
+                    # rots.append(zt)
+                    # x_s.append(x)
+                    # labels.append('P='+str(p)+' N='+str(n))
+                max_deflection.append(max_n_deflect)
+
+    Pl.plot_deflections(ns, max_deflection, exact_def[0][-1], 'Deflection at Tip of Cantilever Beam', ['N=1', 'N=10', 'Exact'])
+    # Pl.new_plot(x_s, defs, rots, labels)
+
+# func_list = [uniform_axial_loading]
 func_list = [transverse_loading]
 eq_list = [beam_theory]
+# p_list = [1]
+# p_list = [2]
 p_list = [1, 2, 3]
 length = 1.
-n_list = [10, 100]
+# n_list = [1, 10]
+n_list = [10, 100, 1000]
+# n_list = [10]
 h_list = [.005]
+bc = ((0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 3, 0), (0, 4, 0), (0, 5, 0),)
+# bc = ((0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 5, 0), (-1, 0, 0), (-1, 1, 0))
 
-plot_solutions(n_list, func_list, eq_list, p_list, length, h_list)
+plot_solutions(n_list, func_list, eq_list, p_list, length, h_list, bc)
