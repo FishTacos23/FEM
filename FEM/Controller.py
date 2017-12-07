@@ -145,7 +145,7 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs, bc):
     mod_e = 10000000.
     v = .33
     g = 3770000.
-    r = 1
+    r = .1
     a = math.pi*(r**2.)
     i1 = math.pi*(r**4.)/4.
     i2 = i1
