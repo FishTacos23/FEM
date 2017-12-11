@@ -150,6 +150,7 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs, bc):
     i1 = math.pi*(r**4.)/4.
     i2 = i1
     ip = i1*2.
+    row = 0.1
     exact = axial_beam_theory(l, mod_e, a)
     exact_def = [transverse_deformation(xi, mod_e, i1) for xi in x]
     exact_rot = [transverse_rot(xi, mod_e, i1) for xi in x]
@@ -194,14 +195,16 @@ def plot_solutions(ns, funcs, eqs, ps, l, hs, bc):
 func_list = [transverse_loading]
 eq_list = [beam_theory]
 # p_list = [1]
-# p_list = [2]
-p_list = [1, 2, 3]
+p_list = [2]
+# p_list = [1, 2, 3]
 length = 1.
 # n_list = [1, 10]
-n_list = [10, 100, 1000]
-# n_list = [10]
+# n_list = [10, 100, 1000]
+n_list = [10]
 h_list = [.005]
-bc = ((0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 3, 0), (0, 4, 0), (0, 5, 0),)
+bc = ((0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 3, 0), (0, 4, 0), (0, 5, 0),
+      (-1, 0, 0), (-1, 1, 0), (-1, 2, 0), (-1, 3, 0), (-1, 4, 0), (-1, 5, 0))
+# bc = ((0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 3, 0), (0, 4, 0), (0, 5, 0),)
 # bc = ((0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 5, 0), (-1, 0, 0), (-1, 1, 0))
 
 plot_solutions(n_list, func_list, eq_list, p_list, length, h_list, bc)
