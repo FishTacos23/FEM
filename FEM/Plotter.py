@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-colors = ['r', 'g', 'b', 'orange', 'black']
+colors = ['r', 'g', 'b', 'orange', 'black', 'cyan', 'magenta', 'yellow', 'darkkhaki', 'darksalmon']
 
 
 def plot_graphs(x, y, title, p=None):
@@ -29,6 +29,13 @@ def plot_deflections(n, mx, exact, title, labels):
     plt.xlabel('Number of Nodes')
     plt.ylabel('Tip Deflection')
     plt.title(title)
+    plt.show()
+
+
+def plot_modes(x, y_list):
+    for y in xrange(len(y_list)):
+        for e in xrange(len(x)):
+            plt.plot(x[e], y_list[y][e], color=colors[y])
     plt.show()
 
 

@@ -1,10 +1,11 @@
 import numpy as np
 import math
+import scipy.linalg as la
 
 
 class FEM(object):
 
-    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1.), bc=((-1, 0), (-2, 0)), h=None):
+    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1., 1.), bc=((-1, 0), (-2, 0)), h=None):
 
         self.n = n  # number of elements
         self.p = p  # degree
@@ -19,6 +20,7 @@ class FEM(object):
 
         self.g_i = prop[0]  # polar moment of inertia (I)
         self.m_e = prop[1]  # Modulus of Elasticity (E)
+        self.row = prop[2]  # density
 
         if l is None:
             self.l = float(n)
@@ -33,16 +35,21 @@ class FEM(object):
 
     def solve(self):
 
-        d_n = self._solve_d()  # solve for displacements of non-zero nodes
+        d_n, e_val, e_vecs = self._solve_d()  # solve for displacements of non-zero nodes
         xc = np.linspace(-0.99999, 0.99999, 100)  # list of xc values for which to solve
 
         u = []  # list of u for each element
         x = []  # list of matching x values
 
+        m_u_list = []  # list of u for each element
+
         d = np.zeros((len(self.xga), 1))  # place zero value nodes in d
+        d_m = np.zeros((len(self.xga), len(e_val)))  # place zero value nodes in d
+        e_vecs = np.swapaxes(e_vecs, 0, 1)
         for a in xrange(1, len(self.xga)+1):
             if self._id(a) != 0:
                 d[a-1] = d_n[a-1]
+                d_m[a-1] = e_vecs[a-1]
 
         for e in xrange(1, self.n+1):  # loop over elements
 
@@ -61,11 +68,31 @@ class FEM(object):
             u.append(ue)
             x.append(xe)
 
-        return u, x, d, self.xga
+        for q in xrange(len(e_val)):
+
+            m_u = []
+
+            for e in xrange(1, self.n + 1):  # loop over elements
+
+                ue = np.zeros((len(xc)))
+
+                for i in xrange(len(xc)):  # loop over each xc value
+
+                    dnx, ddnx, jac, x_pos, ne, dne = self._basis_x(e, xc[i])  # get basis and x
+
+                    for a in xrange(1, self.p + 2):
+                        ue[i] += ne[a - 1] * d_m[self._ien(e, a) - 1][q]
+                        # ue[i] += ne[a-1]*d[self._lm(a, e)]
+
+                m_u.append(ue)
+            m_u_list.append(m_u)
+
+        return u, x, d, self.xga, m_u_list
 
     def _solve_d(self):
 
         k = np.zeros((self.num_nodes - self.num_bc, self.num_nodes - self.num_bc), dtype=float)  # global K
+        mass = np.zeros((self.num_nodes - self.num_bc, self.num_nodes - self.num_bc), dtype=float)  # global M
         f = np.zeros((self.num_nodes - self.num_bc, 1), dtype=float)  # global F
 
         for e in xrange(1, self.n + 1):  # loop over elements
@@ -81,10 +108,26 @@ class FEM(object):
                             m = self._lm(b, e)
                             if m != 0:
                                 k[i-1][m-1] += ddnx[a-1]*self.m_e*self.g_i*ddnx[b-1]*jac*self.ws[j-1]
+                                mass[i-1][m-1] += ne[a-1]*self.row*ne[b-1]*jac*self.ws[j-1]
                         f[i-1] += ne[a-1]*self._fa(x)*jac*self.ws[j-1]
 
+        e_vals, e_vecs = la.eig(k, b=mass)
+        order = np.argsort(e_vals)
+
+        eig_vals = []
+        for e in e_vals:
+            eig_vals.append(np.real(e))
+
         k = np.asmatrix(k)
-        return np.asarray(k.I * f)
+        m = np.asmatrix(mass)
+
+        e_values = []
+        e_vectors = []
+        for o in reversed(order):
+            e_values.append(eig_vals[o])
+            e_vectors.append(e_vecs[:, o])
+
+        return np.asarray(k.I * f), e_values[:10], e_vectors[:10]
 
     def _basis_x(self, e, xc):
 
@@ -152,7 +195,10 @@ class FEM(object):
 
     def _get_c_e(self, e):
 
-        if self.p == 2:
+        if self.p == 1:
+            return np.asarray([[1., 0.], [0., 1.]])
+
+        elif self.p == 2:
             if self.n == 1:
                 return np.asarray([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]])
             elif e == 1:
