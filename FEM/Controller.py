@@ -24,7 +24,7 @@ def linear(a, c, p):
     return n
 
 
-def bernstein(a, gc, p):
+def bern(a, gc, p):
     f1 = (1/(2**float(p)))
     f2 = (math.factorial(p)/(math.factorial(a-1)*math.factorial(p-a+1)))
     f3 = ((1.-gc)**(p-float(a)+1.))
@@ -33,7 +33,7 @@ def bernstein(a, gc, p):
     return f1*float(f2)*f3*f4
 
 
-def d_bernstein(a, gc, p):
+def d_bern(a, gc, p):
     f1 = (1 / (2 ** float(p)))
     f2 = (math.factorial(p) / (math.factorial(a - 1) * math.factorial(p - a + 1)))
     f3 = ((1. - gc) ** (p - float(a)))
@@ -43,7 +43,7 @@ def d_bernstein(a, gc, p):
     return f1*float(f2)*f3*f4*f5
 
 
-def dd_bernstein(a, gc, p):
+def dd_bern(a, gc, p):
     f1 = (1 / (2 ** float(p)))
     f2 = (math.factorial(p) / (math.factorial(a - 1) * math.factorial(p - a + 1)))
     f3 = ((1. - gc) ** (p - float(a) - 1.))
@@ -99,42 +99,33 @@ def plot_errors(ns, funcs, eqs):
     Pl.plt_error(hs, e, 'Error')
 
 
-def plot_solutions(ns, funcs, eqs, ps, l, hs):
+def plot_solutions(ps, l, hs):
 
     x = [np.arange(0., 1., .000001)]
-    max_deflection = [[], []]
-    exact = []
-    slenderness = []
     b = 0.005
     mod_e = 1000000.
     row = .1
+    pol_i = b * (hs ** 3.) / 12.
 
-    for h in hs:
-        pol_i = b*(h**3.)/12.
-        slenderness.append(l/h)
+    freq = [float(n)*math.pi*math.sqrt(mod_e/row)/l for n in xrange(1, 1001)]
+    # freq = [(float(n)-.5)*math.pi*math.sqrt(mod_e/row)/l for n in xrange(1, 1001)]
+    n_m_n = np.linspace(1./1000., 1., 1000)
 
-        for i, func in enumerate(funcs):
-            for j, p in enumerate(ps):
-                for n in ns:
-                    n_adj = 1000-p
-                    model = FEM.FEM(n_adj, [bernstein, d_bernstein, dd_bernstein],
-                                    func, l=l, p=p, prop=(pol_i, mod_e, row), h=h)
-                    uh, xh, d, xga, m_u_list = model.solve()
-                    # max_deflection[j].append((d[0]))
-                    # Pl.plot_graphs([x, xh], [[eqs[i](x[0], h)], uh], 'n=' + str(n) + ' f=x2', p=[d, xga])
-                    Pl.plot_modes(xh, m_u_list)
+    freq_e_list = []
 
-    # max_deflection.append(exact)
-    # Pl.plot_deflections(ns, max_deflection, None, 'Deflection at Tip of Cantilever Beam', ['C1', 'C2', 'Exact'])
+    for j, p in enumerate(ps):
+        n_adj = 1000-p
+        model = FEM.FEM(n_adj, [bern, d_bern, dd_bern], func_p2, l=l, p=p, prop=(pol_i, mod_e, row), h=hs)
+        uh, xh, d, xga, m_u_list, f_list = model.solve()
+        Pl.plot_modes(xh, m_u_list)
+        # Pl.animation_plot(np.asarray(xh).flatten(), np.asarray(m_u_list[0]).flatten())
+        for i, f in enumerate(f_list):
+            freq_e_list.append(f/freq[i])
 
-func_list = [func_p2]
-eq_list = [beam_theory]
+    Pl.plot_modes([n_m_n], [freq_e_list])
+
 p_list = [1, 2, 3]
 length = 1.
-n_list = [100]
-h_list = [.005]
+h_list = .005
 
-# n_list = [10]
-# h_list = [.1, 0.01, .005, .002, .001]
-
-plot_solutions(n_list, func_list, eq_list, p_list, length, h_list)
+plot_solutions(p_list, length, h_list)

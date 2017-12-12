@@ -5,7 +5,7 @@ import scipy.linalg as la
 
 class FEM(object):
 
-    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1., 1.), bc=((-1, 0), (-2, 0)), h=None):
+    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1., 1.), bc=((-1, 0), (-2, 0), (0, 0), (1, 0)), h=None):
 
         self.n = n  # number of elements
         self.p = p  # degree
@@ -40,16 +40,16 @@ class FEM(object):
 
         u = []  # list of u for each element
         x = []  # list of matching x values
-
         m_u_list = []  # list of u for each element
 
         d = np.zeros((len(self.xga), 1))  # place zero value nodes in d
-        d_m = np.zeros((len(self.xga), len(e_val)))  # place zero value nodes in d
+        d_m = np.zeros((len(self.xga), len(e_vecs)))  # place zero value nodes in d
         e_vecs = np.swapaxes(e_vecs, 0, 1)
         for a in xrange(1, len(self.xga)+1):
-            if self._id(a) != 0:
-                d[a-1] = d_n[a-1]
-                d_m[a-1] = e_vecs[a-1]
+            g = self._id(a)
+            if g != 0:
+                d[g-1] = d_n[g-1]
+                d_m[g-1] = e_vecs[g-1]
 
         for e in xrange(1, self.n+1):  # loop over elements
 
@@ -63,12 +63,11 @@ class FEM(object):
 
                 for a in xrange(1, self.p + 2):
                     ue[i] += ne[a-1]*d[self._ien(e, a)-1]
-                    # ue[i] += ne[a-1]*d[self._lm(a, e)]
 
             u.append(ue)
             x.append(xe)
 
-        for q in xrange(len(e_val)):
+        for q in xrange(len(e_vecs[0])):
 
             m_u = []
 
@@ -82,12 +81,15 @@ class FEM(object):
 
                     for a in xrange(1, self.p + 2):
                         ue[i] += ne[a - 1] * d_m[self._ien(e, a) - 1][q]
-                        # ue[i] += ne[a-1]*d[self._lm(a, e)]
 
                 m_u.append(ue)
             m_u_list.append(m_u)
 
-        return u, x, d, self.xga, m_u_list
+        freq = []
+        for e in e_val:
+            freq.append(math.sqrt(e))
+
+        return u, x, d, self.xga, m_u_list, freq
 
     def _solve_d(self):
 
@@ -96,11 +98,8 @@ class FEM(object):
         f = np.zeros((self.num_nodes - self.num_bc, 1), dtype=float)  # global F
 
         for e in xrange(1, self.n + 1):  # loop over elements
-
             for j in xrange(1, self.n_int + 1):  # loop over quadrature points
-
                 dnx, ddnx, jac, x, ne, dne = self._basis_x(e, self.qs[j - 1])  # get values of global basis, x, and jac
-
                 for a in xrange(1, self.p + 2):  # loop to place element k, f into global K, F
                     i = self._lm(a, e)
                     if i != 0:
@@ -119,15 +118,14 @@ class FEM(object):
             eig_vals.append(np.real(e))
 
         k = np.asmatrix(k)
-        m = np.asmatrix(mass)
 
         e_values = []
         e_vectors = []
-        for o in reversed(order):
+        for o in order:
             e_values.append(eig_vals[o])
             e_vectors.append(e_vecs[:, o])
 
-        return np.asarray(k.I * f), e_values[:10], e_vectors[:10]
+        return np.asarray(k.I * f), e_values, e_vectors[:10]
 
     def _basis_x(self, e, xc):
 

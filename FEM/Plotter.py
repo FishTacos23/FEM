@@ -1,4 +1,7 @@
 import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.animation as animation
+import math
 
 colors = ['r', 'g', 'b', 'orange', 'black', 'cyan', 'magenta', 'yellow', 'darkkhaki', 'darksalmon']
 
@@ -51,4 +54,33 @@ def plt_error(h, e, title):
     ax.set_xscale('log')
     fig.suptitle(title)
 
+    plt.show()
+
+
+def animation_plot(x, y):
+
+    dt = 0.05
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, autoscale_on=False, xlim=(-2, 2), ylim=(-2, 2))
+    ax.grid()
+
+    line, = ax.plot([], [], 'o-', lw=2)
+    time_template = 'time = %.1fs'
+    time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+
+    def init():
+        line.set_data([], [])
+        time_text.set_text('')
+        return line, time_text
+
+    def animate(i):
+        this_y = y*math.cos(2.*math.pi*i/100)
+
+        line.set_data(x, this_y)
+        time_text.set_text(time_template % (i*dt))
+        return line, time_text
+
+    ani = animation.FuncAnimation(fig, animate, np.arange(1, 100), interval=100, blit=True, init_func=init)
+    # ani.save('double_pendulum.mp4', fps=15)
     plt.show()
