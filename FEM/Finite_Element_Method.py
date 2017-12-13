@@ -35,55 +35,34 @@ class FEM(object):
 
     def solve(self):
 
-        d_n, e_val, e_vecs = self._solve_d()  # solve for displacements of non-zero nodes
-        xc = np.linspace(-0.99999, 0.99999, 100)  # list of xc values for which to solve
-
-        u = []  # list of u for each element
-        x = []  # list of matching x values
-        m_u_list = []  # list of u for each element
+        d_n, e_val, e_vectors = self._solve_d()  # solve for displacements of non-zero nodes
+        xc = np.linspace(-.99, .99, 3)  # list of xc values for which to solve
 
         d = np.zeros((len(self.xga), 1))  # place zero value nodes in d
-        d_m = np.zeros((len(self.xga), len(e_vecs)))  # place zero value nodes in d
-        e_vecs = np.swapaxes(e_vecs, 0, 1)
+        d_m = np.zeros((len(self.xga), len(e_vectors)))  # place zero value nodes in d
+        e_vectors = np.swapaxes(e_vectors, 0, 1)
         for a in xrange(1, len(self.xga)+1):
             g = self._id(a)
             if g != 0:
                 d[g-1] = d_n[g-1]
-                d_m[g-1] = e_vecs[g-1]
+                d_m[g-1] = e_vectors[g-1]
+
+        u = np.zeros((self.n, len(xc)))  # list of u for each element
+        x = np.empty((self.n, len(xc)))  # list of matching x values
+        m_u_list = np.zeros((len(e_vectors[0]), self.n, len(xc)))  # list of u for each element
 
         for e in xrange(1, self.n+1):  # loop over elements
-
-            ue = np.zeros((len(xc)))
-            xe = np.empty((len(xc)))
 
             for i in xrange(len(xc)):  # loop over each xc value
 
                 dnx, ddnx, jac, x_pos, ne, dne = self._basis_x(e, xc[i])  # get basis and x
-                xe[i] = x_pos
+                x[e-1][i] = x_pos
 
                 for a in xrange(1, self.p + 2):
-                    ue[i] += ne[a-1]*d[self._ien(e, a)-1]
+                    u[e-1][i] += ne[a-1]*d[self._ien(e, a)-1]
 
-            u.append(ue)
-            x.append(xe)
-
-        for q in xrange(len(e_vecs[0])):
-
-            m_u = []
-
-            for e in xrange(1, self.n + 1):  # loop over elements
-
-                ue = np.zeros((len(xc)))
-
-                for i in xrange(len(xc)):  # loop over each xc value
-
-                    dnx, ddnx, jac, x_pos, ne, dne = self._basis_x(e, xc[i])  # get basis and x
-
-                    for a in xrange(1, self.p + 2):
-                        ue[i] += ne[a - 1] * d_m[self._ien(e, a) - 1][q]
-
-                m_u.append(ue)
-            m_u_list.append(m_u)
+                    for q in xrange(len(e_vectors[0])):
+                        m_u_list[q][e-1][i] += ne[a - 1] * d_m[self._ien(e, a) - 1][q]
 
         freq = []
         for e in e_val:

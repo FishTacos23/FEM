@@ -42,18 +42,9 @@ def plot_modes(x, y_list):
     plt.show()
 
 
-def plt_error(h, e, title):
-
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-
-    for i in xrange(len(e)):
-        line, = ax.plot(h, e[i], color=colors[i], lw=2)
-
-    ax.set_yscale('log')
-    ax.set_xscale('log')
-    fig.suptitle(title)
-
+def plot_errors(x, y):
+    for i in xrange(len(x)):
+        plt.plot(x[i], y[i])
     plt.show()
 
 
@@ -62,7 +53,7 @@ def animation_plot(x, y):
     dt = 0.05
 
     fig = plt.figure()
-    ax = fig.add_subplot(111, autoscale_on=False, xlim=(-2, 2), ylim=(-2, 2))
+    ax = fig.add_subplot(111, autoscale_on=False, xlim=(0, 1), ylim=(-.5, .5))
     ax.grid()
 
     line, = ax.plot([], [], 'o-', lw=2)
@@ -81,6 +72,6 @@ def animation_plot(x, y):
         time_text.set_text(time_template % (i*dt))
         return line, time_text
 
-    ani = animation.FuncAnimation(fig, animate, np.arange(1, 100), interval=100, blit=True, init_func=init)
+    ani = animation.FuncAnimation(fig, animate, np.arange(1, 100), interval=50, blit=True, init_func=init)
     # ani.save('double_pendulum.mp4', fps=15)
     plt.show()

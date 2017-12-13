@@ -99,9 +99,8 @@ def plot_errors(ns, funcs, eqs):
     Pl.plt_error(hs, e, 'Error')
 
 
-def plot_solutions(ps, l, hs):
+def plot_solutions(ps, l, hs, bounds):
 
-    x = [np.arange(0., 1., .000001)]
     b = 0.005
     mod_e = 1000000.
     row = .1
@@ -112,20 +111,28 @@ def plot_solutions(ps, l, hs):
     n_m_n = np.linspace(1./1000., 1., 1000)
 
     freq_e_list = []
+    n_m_n_list = []
 
     for j, p in enumerate(ps):
+        fp = []
+        n_m_n_p = []
         n_adj = 1000-p
-        model = FEM.FEM(n_adj, [bern, d_bern, dd_bern], func_p2, l=l, p=p, prop=(pol_i, mod_e, row), h=hs)
+        model = FEM.FEM(n_adj, [bern, d_bern, dd_bern], func_p2, l=l, p=p, prop=(pol_i, mod_e, row), h=hs, bc=bounds)
         uh, xh, d, xga, m_u_list, f_list = model.solve()
-        Pl.plot_modes(xh, m_u_list)
-        # Pl.animation_plot(np.asarray(xh).flatten(), np.asarray(m_u_list[0]).flatten())
+        # Pl.plot_modes(xh, m_u_list)
+        # Pl.animation_plot(xh.flatten(), m_u_list[2].flatten())
         for i, f in enumerate(f_list):
-            freq_e_list.append(f/freq[i])
+            fp.append(f/freq[i])
+            n_m_n_p.append(n_m_n[i])
+        freq_e_list.append(fp)
+        n_m_n_list.append(n_m_n_p)
 
-    Pl.plot_modes([n_m_n], [freq_e_list])
+    Pl.plot_errors(n_m_n_list, freq_e_list)
 
 p_list = [1, 2, 3]
 length = 1.
 h_list = .005
+bc = ((-2, 0), (-1, 0))
+# bc = ((0, 0), (1, 0), (-2, 0), (-1, 0))
 
-plot_solutions(p_list, length, h_list)
+plot_solutions(p_list, length, h_list, bc)
