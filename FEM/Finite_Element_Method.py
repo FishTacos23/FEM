@@ -49,7 +49,7 @@ class FEM(object):
 
         u = np.zeros((self.n, len(xc)))  # list of u for each element
         x = np.empty((self.n, len(xc)))  # list of matching x values
-        m_u_list = np.zeros((len(e_vectors[0]), self.n, len(xc)))  # list of u for each element
+        m = np.zeros((len(e_vectors[0]), self.n, len(xc)))  # list of u for each element
 
         for e in xrange(1, self.n+1):  # loop over elements
 
@@ -62,13 +62,13 @@ class FEM(object):
                     u[e-1][i] += ne[a-1]*d[self._ien(e, a)-1]
 
                     for q in xrange(len(e_vectors[0])):
-                        m_u_list[q][e-1][i] += ne[a - 1] * d_m[self._ien(e, a) - 1][q]
+                        m[q][e-1][i] += ne[a - 1] * d_m[self._ien(e, a) - 1][q]
 
         freq = []
         for e in e_val:
             freq.append(math.sqrt(e))
 
-        return u, x, d, self.xga, m_u_list, freq
+        return u, x, d, m, freq
 
     def _solve_d(self):
 

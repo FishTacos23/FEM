@@ -6,35 +6,6 @@ import math
 colors = ['r', 'g', 'b', 'orange', 'black', 'cyan', 'magenta', 'yellow', 'darkkhaki', 'darksalmon']
 
 
-def plot_graphs(x, y, title, p=None):
-
-    for i in xrange(len(x)):
-        for j in xrange(len(x[i])):
-            plt.plot(x[i][j], y[i][j], color=colors[i])
-
-    if p is not None:
-        plt.plot(p[1], p[0], 'bo')
-
-    plt.xlabel('x')
-    plt.ylabel('u')
-    plt.title(title)
-    plt.show()
-
-
-def plot_deflections(n, mx, exact, title, labels):
-
-    for i, p in enumerate(mx):
-        plt.plot(n, p, color=colors[i], marker='+', label=labels[i])
-
-    if exact is not None:
-        plt.plot((0, max(n)), (exact, exact), color='b', label='Exact')
-
-    plt.xlabel('Number of Nodes')
-    plt.ylabel('Tip Deflection')
-    plt.title(title)
-    plt.show()
-
-
 def plot_modes(x, y_list):
     for y in xrange(len(y_list)):
         for e in xrange(len(x)):
