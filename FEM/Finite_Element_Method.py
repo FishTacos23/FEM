@@ -5,7 +5,7 @@ import scipy.linalg as la
 
 class FEM(object):
 
-    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1., 1.), bc=((-1, 0), (-2, 0), (0, 0), (1, 0)), h=None):
+    def __init__(self, n, basis, fun, l=None, p=1, prop=(1., 1., 1.), bc=((-1, 0), (0, 0)), h=None):
 
         self.n = n  # number of elements
         self.p = p  # degree
@@ -85,24 +85,20 @@ class FEM(object):
                         for b in xrange(1, self.p + 2):  # loop to place element k into global K
                             m = self._lm(b, e)
                             if m != 0:
-                                k[i-1][m-1] += ddnx[a-1]*self.m_e*self.g_i*ddnx[b-1]*jac*self.ws[j-1]
+                                k[i-1][m-1] += dnx[a-1]*self.m_e*dnx[b-1]*jac*self.ws[j-1]
                                 mass[i-1][m-1] += ne[a-1]*self.row*ne[b-1]*jac*self.ws[j-1]
                         f[i-1] += ne[a-1]*self._fa(x)*jac*self.ws[j-1]
 
         e_vals, e_vecs = la.eig(k, b=mass)
         order = np.argsort(e_vals)
 
-        eig_vals = []
-        for e in e_vals:
-            eig_vals.append(np.real(e))
-
-        k = np.asmatrix(k)
-
         e_values = []
         e_vectors = []
         for o in order:
-            e_values.append(eig_vals[o])
+            e_values.append(np.real(e_vals[o]))
             e_vectors.append(e_vecs[:, o])
+
+        k = np.asmatrix(k)
 
         return np.asarray(k.I * f), e_values, e_vectors[:10]
 
