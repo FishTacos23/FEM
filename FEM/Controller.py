@@ -45,8 +45,8 @@ def plot_solutions(ps, l, hs, bounds):
     row = .1
     pol_i = b * (hs ** 3.) / 12.
 
-    freq = [float(n)*math.pi*math.sqrt(mod_e/row)/l for n in xrange(1, 1001)]
-    # freq = [(float(n)-.5)*math.pi*math.sqrt(mod_e/row)/l for n in xrange(1, 1001)]
+    # freq = [float(n)*math.pi*math.sqrt(mod_e/row)/l for n in xrange(1, 1001)]
+    freq = [(float(n)-.5)*math.pi*math.sqrt(mod_e/row)/l for n in xrange(1, 1001)]
 
     n_m_n = np.linspace(1./1000., 1., 1000)
 
@@ -60,7 +60,7 @@ def plot_solutions(ps, l, hs, bounds):
         model = FEM.FEM(n_adj, [bern, d_bern, dd_bern], func_p2, l=l, p=p, prop=(pol_i, mod_e, row), h=hs, bc=bounds)
         uh, xh, d, mh, f_list = model.solve()
         # Pl.plot_modes(xh, mh)
-        # Pl.animation_plot(xh.flatten(), mh[1].flatten())
+        Pl.animation_plot(xh.flatten(), mh[1].flatten())
         for i, f in enumerate(f_list):
             fp.append(f/freq[i])
             n_m_n_p.append(n_m_n[i])
@@ -72,7 +72,7 @@ def plot_solutions(ps, l, hs, bounds):
 p_list = [1, 2, 3]
 length = 1.
 h_list = .005
-# bc = ((-1, 0))
-bc = ((0, 0), (-1, 0))
+bc = [[-1, 0]]
+# bc = ((0, 0), (-1, 0))
 
 plot_solutions(p_list, length, h_list, bc)
