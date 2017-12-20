@@ -56,7 +56,7 @@ def plot_solutions(ps, l, hs, bounds):
     for j, p in enumerate(ps):
         fp = []
         n_m_n_p = []
-        n_adj = 1000-p
+        n_adj = 1000+len(bounds)-p
         model = FEM.FEM(n_adj, [bern, d_bern, dd_bern], func_p2, l=l, p=p, prop=(pol_i, mod_e, row), h=hs, bc=bounds)
         uh, xh, d, mh, f_list = model.solve()
         # Pl.plot_modes(xh, mh)
